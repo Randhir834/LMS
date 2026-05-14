@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #F7FAFC;
+  --color-foreground: #1E293B;
+
+  /* Primary Green Palette */
+  --color-primary-50: #F0FDF4;
+  --color-primary-100: #DCFCE7;
+  --color-primary-200: #86EFAC;
+  --color-primary-300: #4ADE80;
+  --color-primary-400: #22C55E;
+  --color-primary-500: #1B8A44;
+  --color-primary-600: #15803D;
+  --color-primary-700: #166534;
+  --color-primary-800: #14532D;
+  --color-primary-900: #0B3D1E;
+
+  /* Secondary Green Palette */
+  --color-secondary-50: #F7FCF9;
+  --color-secondary-100: #EDF8F1;
+  --color-secondary-200: #DDF2E4;
+  --color-secondary-300: #CBE9D5;
+  --color-secondary-400: #B7DEC5;
+  --color-secondary-500: #A8D5BA;
+  --color-secondary-600: #73A887;
+  --color-secondary-700: #5D9271;
+  --color-secondary-800: #4B7A5E;
+  --color-secondary-900: #355E47;
+
+  /* Tertiary Dark Palette */
+  --color-dark-50: #F8FAFC;
+  --color-dark-100: #E2E8F0;
+  --color-dark-200: #CBD5E1;
+  --color-dark-300: #94A3B8;
+  --color-dark-400: #64748B;
+  --color-dark-500: #2D3748;
+  --color-dark-600: #475569;
+  --color-dark-700: #334155;
+  --color-dark-800: #1E293B;
+  --color-dark-900: #0F172A;
+
+  /* Neutral */
+  --color-card: #FFFFFF;
+  --color-sidebar: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-soft: #EDF2F7;
+  --color-hover: #F1F5F9;
+
+  /* Text */
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748B;
+  --color-text-placeholder: #94A3B8;
+  --color-text-white: #FFFFFF;
+
+  /* Dashboard Status */
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-error: #DC2626;
+  --color-info: #2563EB;
+
+  /* Fonts */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
