@@ -19,6 +19,7 @@ const settingsRoutes = require('./settingsRoutes');
 const searchRoutes = require('./searchRoutes');
 const attendanceRoutes = require('./attendanceRoutes');
 const courseMaterialRoutes = require('./courseMaterialRoutes');
+const trialRequestRoutes = require('./trialRequestRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -36,6 +37,7 @@ router.use('/admin', adminRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/search', searchRoutes);
 router.use('/attendance', attendanceRoutes);
+router.use('/trial-requests', trialRequestRoutes);
 router.use('/', courseMaterialRoutes);
 
 router.use((req, res) => {
