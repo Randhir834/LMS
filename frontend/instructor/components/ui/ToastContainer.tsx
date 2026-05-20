@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 "use client";
+=======
+'use client';
+>>>>>>> Stashed changes
 
 import React, { useState, useCallback, createContext, useContext } from 'react';
 import Toast, { ToastProps } from './Toast';

@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 "use client";
+=======
+'use client';
+>>>>>>> Stashed changes
 
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from 'lucide-react';
