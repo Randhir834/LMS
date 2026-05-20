@@ -1,15 +1,19 @@
 import api from './api';
 
 export interface InstructorRegistrationData {
-  name: string;
+  fullName: string;
   qualification: string;
-  subject: string;
-  phone: string;
+  subjectExpertise: string;
+  phoneNumber: string;
+  role?: 'instructor' | 'student';
 }
 
 export const instructorRegistrationService = {
   registerInstructor: async (data: InstructorRegistrationData) => {
-    const response = await api.post('/instructor-registrations', data);
+    const response = await api.post('/instructor-registrations', {
+      ...data,
+      role: data.role || 'instructor',
+    });
     return response.data;
   },
 };

@@ -1,56 +1,239 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { Calendar, Clock, Users, Loader2, ExternalLink, AlertCircle, BookOpen } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import StudentDashboardLayout from '@/components/layouts/StudentDashboardLayout';
 import { liveClassService } from '@/services/liveClassService';
 import type { LiveClass } from '@/types';
 
-export default function StudentLiveClassesPage() {
+function StudentLiveClassesContent() {
   const [classes, setClasses] = useState<LiveClass[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    liveClassService.getLiveClasses().then((d) => setClasses(d.liveClasses)).catch(() => setClasses([]));
+    const fetchLiveClasses = async () => {
+      try {
+        setLoading(true);
+        const data = await liveClassService.getLiveClasses();
+        setClasses(data.liveClasses || []);
+        setError('');
+      } catch (err) {
+        console.error('Failed to fetch live classes:', err);
+        setError('Failed to load live classes');
+        setClasses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLiveClasses();
   }, []);
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const getTimeUntilClass = (scheduledAt: string) => {
+    const now = new Date();
+    const classTime = new Date(scheduledAt);
+    const diff = classTime.getTime() - now.getTime();
+
+    if (diff < 0) return 'Class ended';
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 24) {
+      const days = Math.floor(hours / 24);
+      return `In ${days} day${days > 1 ? 's' : ''}`;
+    }
+
+    if (hours > 0) {
+      return `In ${hours}h ${minutes}m`;
+    }
+
+    if (minutes > 0) {
+      return `In ${minutes} minutes`;
+    }
+
+    return 'Starting now!';
+  };
+
   return (
-    <div className="p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div>
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-text-primary">Live Classes</h1>
-          <p className="text-xs sm:text-sm text-text-muted mt-1">Join your scheduled live classes</p>
+    <StudentDashboardLayout>
+      <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-[#1E293B]">Live Classes</h1>
+            <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+              Join your scheduled live classes and interact with instructors
+            </p>
+          </div>
         </div>
-      </div>
-      
-      <Card>
-        <CardHeader><CardTitle>Upcoming Classes</CardTitle></CardHeader>
-        <CardContent>
-          <div className="space-y-3 sm:space-y-4">
-            {classes.length === 0 && (
-              <div className="text-center py-6 sm:py-8">
-                <p className="text-xs sm:text-sm text-text-muted">No upcoming live classes.</p>
+
+        {/* Error Message */}
+        {error && (
+          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <AlertCircle className="size-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="size-8 animate-spin text-[#1B8A44]" />
+          </div>
+        ) : classes.length === 0 ? (
+          <Card>
+            <CardContent>
+              <div className="text-center py-12">
+                <Calendar className="size-12 text-[#CBD5E1] mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-[#1E293B] mb-2">
+                  No upcoming live classes
+                </h3>
+                <p className="text-sm text-[#64748B] mb-6">
+                  Enroll in courses to see upcoming live classes from your instructors.
+                </p>
               </div>
-            )}
-            {classes.map((c) => (
-              <div key={c.id} className="border border-border rounded-lg p-3 sm:p-4 hover:border-primary-200 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm sm:text-base font-medium text-text-primary truncate">{c.title}</p>
-                    <p className="text-xs sm:text-sm text-text-muted">{new Date(c.scheduled_at).toLocaleString()}</p>
-                  </div>
-                  <a 
-                    className="inline-flex items-center justify-center px-3 py-2 text-xs sm:text-sm font-medium text-primary-500 hover:text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors min-h-[44px] sm:min-h-0" 
-                    href={c.meet_link} 
-                    target="_blank" 
-                    rel="noreferrer"
-                  >
-                    Join Google Meet
-                  </a>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {classes.map((liveClass) => {
+              const timeUntil = getTimeUntilClass(liveClass.scheduled_at);
+              const isStartingSoon = new Date(liveClass.scheduled_at).getTime() - new Date().getTime() < 15 * 60 * 1000;
+
+              return (
+                <Card
+                  key={liveClass.id}
+                  className={`hover:shadow-md transition-all ${
+                    isStartingSoon ? 'border-[#1B8A44] border-2' : ''
+                  }`}
+                >
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      {/* Class Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg flex-shrink-0 ${
+                            isStartingSoon ? 'bg-[#1B8A44]/10' : 'bg-[#7C3AED]/10'
+                          }`}>
+                            <Calendar className={`size-5 ${
+                              isStartingSoon ? 'text-[#1B8A44]' : 'text-[#7C3AED]'
+                            }`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base sm:text-lg font-semibold text-[#1E293B] truncate">
+                              {liveClass.title}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+                              {liveClass.course_title}
+                            </p>
+                            {liveClass.instructor_name && (
+                              <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+                                Instructor: {liveClass.instructor_name}
+                              </p>
+                            )}
+                            {liveClass.description && (
+                              <p className="text-xs sm:text-sm text-[#64748B] mt-2 line-clamp-2">
+                                {liveClass.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Date, Time, Duration */}
+                        <div className="flex flex-wrap gap-3 sm:gap-4 mt-4 text-xs sm:text-sm">
+                          <div className="flex items-center gap-2 text-[#64748B]">
+                            <Calendar className="size-4 flex-shrink-0" />
+                            <span className="truncate">{formatDateTime(liveClass.scheduled_at)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[#64748B]">
+                            <Clock className="size-4 flex-shrink-0" />
+                            <span>{liveClass.duration_minutes} min</span>
+                          </div>
+                          <div className={`flex items-center gap-2 font-medium ${
+                            isStartingSoon ? 'text-[#1B8A44]' : 'text-[#7C3AED]'
+                          }`}>
+                            <span className={`inline-block size-2 rounded-full ${
+                              isStartingSoon ? 'bg-[#1B8A44]' : 'bg-[#7C3AED]'
+                            }`} />
+                            {timeUntil}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Join Button */}
+                      <a
+                        href={liveClass.meet_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium text-sm whitespace-nowrap flex-shrink-0 ${
+                          isStartingSoon
+                            ? 'bg-[#1B8A44] text-white hover:bg-[#157a35]'
+                            : 'bg-[#7C3AED] text-white hover:bg-[#6d28d9]'
+                        }`}
+                      >
+                        <ExternalLink className="size-4" />
+                        <span className="hidden xs:inline">Join Now</span>
+                        <span className="xs:hidden">Join</span>
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Info Card */}
+        {classes.length > 0 && (
+          <Card className="bg-[#F0F9FF] border-[#0EA5E9]">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex gap-3">
+                <BookOpen className="size-5 text-[#0EA5E9] flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-[#1E293B] text-sm">Tips for Live Classes</h4>
+                  <ul className="text-xs sm:text-sm text-[#64748B] mt-2 space-y-1">
+                    <li>• Join 5 minutes early to test your audio and video</li>
+                    <li>• Keep your microphone muted unless speaking</li>
+                    <li>• Use the chat to ask questions and interact</li>
+                    <li>• Classes are recorded for future reference</li>
+                  </ul>
                 </div>
               </div>
-            ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </StudentDashboardLayout>
+  );
+}
+
+export default function StudentLiveClassesPage() {
+  return (
+    <Suspense fallback={
+      <StudentDashboardLayout>
+        <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="size-8 animate-spin text-[#1B8A44]" />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </StudentDashboardLayout>
+    }>
+      <StudentLiveClassesContent />
+    </Suspense>
   );
 }

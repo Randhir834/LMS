@@ -32,4 +32,9 @@ export const adminService = {
     const response = await api.get('/admin/analytics');
     return response.data;
   },
+
+  createInstructor: async (instructorData: any) => {
+    const response = await api.post('/admin/instructors/create', instructorData);
+    return response.data;
+  },
 };

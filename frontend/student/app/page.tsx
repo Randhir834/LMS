@@ -375,7 +375,7 @@ export default function Home() {
                         value={formData.name}
                         onChange={handleChange}
                         className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                        placeholder="John Doe"
+                        placeholder=""
                       />
                     </div>
                   </div>
@@ -395,7 +395,7 @@ export default function Home() {
                         value={formData.email}
                         onChange={handleChange}
                         className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                        placeholder="john@example.com"
+                        placeholder=""
                       />
                     </div>
                   </div>
@@ -415,7 +415,7 @@ export default function Home() {
                         value={formData.phone}
                         onChange={handleChange}
                         className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                        placeholder="(555) 123-4567"
+                        placeholder=""
                       />
                     </div>
                   </div>
@@ -435,7 +435,7 @@ export default function Home() {
                         value={formData.grade}
                         onChange={handleChange}
                         className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                        placeholder="e.g. 10th Grade"
+                        placeholder=""
                       />
                     </div>
                   </div>

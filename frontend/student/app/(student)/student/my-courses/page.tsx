@@ -8,6 +8,7 @@ import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import CourseCard from '@/components/ui/CourseCard';
 import StudentDashboardLayout from '@/components/layouts/StudentDashboardLayout';
+import UpcomingLiveClasses from '@/components/UpcomingLiveClasses';
 import { enrollmentService } from '@/services/enrollmentService';
 import type { Course } from '@/types';
 
@@ -213,57 +214,64 @@ function MyCoursesContent() {
 
         {/* Learning Progress Summary */}
         {enrollments.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Learning Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[#1E293B]">Overall Progress</span>
-                  <span className="text-sm text-[#64748B]">{Math.round(averageProgress)}%</span>
-                </div>
-                <div className="w-full bg-[#E2E8F0] rounded-full h-3">
-                  <div 
-                    className="bg-[#1B8A44] h-3 rounded-full transition-all duration-300"
-                    style={{ width: `${averageProgress}%` }}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                  <div className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-lg">
-                    <div className="p-2 bg-[#1B8A44]/10 rounded-lg">
-                      <CheckCircle2 className="size-5 text-[#1B8A44]" />
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold text-[#1E293B]">{stats.completed}</div>
-                      <div className="text-sm text-[#64748B]">Courses Completed</div>
-                    </div>
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle>Learning Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#1E293B]">Overall Progress</span>
+                    <span className="text-sm text-[#64748B]">{Math.round(averageProgress)}%</span>
+                  </div>
+                  <div className="w-full bg-[#E2E8F0] rounded-full h-3">
+                    <div 
+                      className="bg-[#1B8A44] h-3 rounded-full transition-all duration-300"
+                      style={{ width: `${averageProgress}%` }}
+                    />
                   </div>
                   
-                  <div className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-lg">
-                    <div className="p-2 bg-[#D97706]/10 rounded-lg">
-                      <Play className="size-5 text-[#D97706]" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-lg">
+                      <div className="p-2 bg-[#1B8A44]/10 rounded-lg">
+                        <CheckCircle2 className="size-5 text-[#1B8A44]" />
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-[#1E293B]">{stats.completed}</div>
+                        <div className="text-sm text-[#64748B]">Courses Completed</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-lg font-semibold text-[#1E293B]">{stats.inProgress}</div>
-                      <div className="text-sm text-[#64748B]">In Progress</div>
+                    
+                    <div className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-lg">
+                      <div className="p-2 bg-[#D97706]/10 rounded-lg">
+                        <Play className="size-5 text-[#D97706]" />
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-[#1E293B]">{stats.inProgress}</div>
+                        <div className="text-sm text-[#64748B]">In Progress</div>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-lg">
-                    <div className="p-2 bg-[#64748B]/10 rounded-lg">
-                      <Clock className="size-5 text-[#64748B]" />
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold text-[#1E293B]">{stats.notStarted}</div>
-                      <div className="text-sm text-[#64748B]">Not Started</div>
+                    
+                    <div className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-lg">
+                      <div className="p-2 bg-[#64748B]/10 rounded-lg">
+                        <Clock className="size-5 text-[#64748B]" />
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-[#1E293B]">{stats.notStarted}</div>
+                        <div className="text-sm text-[#64748B]">Not Started</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Live Classes */}
+            <div className="mt-6">
+              <UpcomingLiveClasses />
+            </div>
+          </>
         )}
       </div>
     </StudentDashboardLayout>

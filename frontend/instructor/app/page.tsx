@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle, BookOpen, Users, Trophy, Star, Menu, X, Quote,
 import { instructorRegistrationService } from '@/services/instructorRegistrationService';
 
 export default function Home() {
-  const [formData, setFormData] = useState({ name: '', qualification: '', subject: '', phone: '' });
+  const [formData, setFormData] = useState({ fullName: '', qualification: '', subjectExpertise: '', phoneNumber: '' });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -29,7 +29,7 @@ export default function Home() {
       setSubmitted(true);
       setTimeout(() => {
         setSubmitted(false);
-        setFormData({ name: '', qualification: '', subject: '', phone: '' });
+        setFormData({ fullName: '', qualification: '', subjectExpertise: '', phoneNumber: '' });
       }, 5000);
     } catch (err: unknown) {
       console.error('Error submitting instructor registration:', err);
@@ -347,20 +347,20 @@ export default function Home() {
                   )}
                   
                   <div className="space-y-1.5">
-                    <label htmlFor="name" className="block text-sm font-semibold text-dark-900">Full Name</label>
+                    <label htmlFor="fullName" className="block text-sm font-semibold text-dark-900">Full Name</label>
                     <div className="relative group">
                       <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-400 group-focus-within:text-primary-500 transition-colors">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                       </div>
                       <input 
                         type="text" 
-                        id="name" 
-                        name="name" 
+                        id="fullName" 
+                        name="fullName" 
                         required
-                        value={formData.name}
+                        value={formData.fullName}
                         onChange={handleChange}
                         className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                        placeholder="John Doe"
+                        placeholder=""
                       />
                     </div>
                   </div>
@@ -379,45 +379,45 @@ export default function Home() {
                         value={formData.qualification}
                         onChange={handleChange}
                         className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                        placeholder="e.g. M.Sc., Ph.D., B.Ed."
+                        placeholder=""
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label htmlFor="subject" className="block text-sm font-semibold text-dark-900">Subject Expertise</label>
+                    <label htmlFor="subjectExpertise" className="block text-sm font-semibold text-dark-900">Subject Expertise</label>
                     <div className="relative group">
                       <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-400 group-focus-within:text-primary-500 transition-colors">
                         <BookOpen className="w-5 h-5" />
                       </div>
                       <input 
                         type="text" 
-                        id="subject" 
-                        name="subject"
+                        id="subjectExpertise" 
+                        name="subjectExpertise"
                         required
-                        value={formData.subject}
+                        value={formData.subjectExpertise}
                         onChange={handleChange}
                         className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                        placeholder="e.g. Mathematics, Physics, Chemistry"
+                        placeholder=""
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label htmlFor="phone" className="block text-sm font-semibold text-dark-900">Phone Number</label>
+                    <label htmlFor="phoneNumber" className="block text-sm font-semibold text-dark-900">Phone Number</label>
                     <div className="relative group">
                       <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-400 group-focus-within:text-primary-500 transition-colors">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                       </div>
                       <input 
                         type="tel" 
-                        id="phone" 
-                        name="phone"
+                        id="phoneNumber" 
+                        name="phoneNumber"
                         required
-                        value={formData.phone}
+                        value={formData.phoneNumber}
                         onChange={handleChange}
                         className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                        placeholder="(555) 123-4567"
+                        placeholder=""
                       />
                     </div>
                   </div>

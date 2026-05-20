@@ -8,7 +8,6 @@ export default function AuthGroupLayout({ children }: { children: React.ReactNod
 
   if (
     pathname === '/login' ||
-    pathname === '/register' ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password'
   ) {

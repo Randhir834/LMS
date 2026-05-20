@@ -119,10 +119,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-text-muted">
-        Don&apos;t have an account?{' '}
-        <Link href="/register" className="text-primary-500 hover:text-primary-600 font-semibold">Create new account</Link>
-      </p>
+
     </InstructorAuthSplitShell>
   );
 }
