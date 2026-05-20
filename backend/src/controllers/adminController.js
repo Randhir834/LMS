@@ -1,6 +1,7 @@
 const {
   findAllUsers, findUserById, updateUserRole, updateUser, deleteUserById,
   getDashboardStats, getEnrollmentTrend, getRecentEnrollments, getRecentPayments,
+  createInstructor
 } = require('../services/adminService');
 
 const getUsers = async (req, res, next) => {
@@ -92,4 +93,40 @@ const getAnalytics = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-module.exports = { getUsers, getUserById, updateUserRoleController, updateUserController, deleteUser, getAnalytics };
+const createInstructorAccount = async (req, res, next) => {
+  try {
+    const { name, email, phone, location, qualifications, specialization } = req.body;
+
+    // Validation
+    if (!name || !email || !phone || !location || !qualifications || !specialization) {
+      return res.status(400).json({ error: 'All fields are required: name, email, phone, location, qualifications, specialization' });
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    const result = await createInstructor({
+      name,
+      email,
+      phone,
+      location,
+      qualifications,
+      specialization
+    });
+
+    res.status(201).json({
+      message: 'Instructor account created successfully',
+      instructor: result
+    });
+  } catch (error) {
+    if (error.message === 'Email already exists') {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+    next(error);
+  }
+};
+
+module.exports = { getUsers, getUserById, updateUserRoleController, updateUserController, deleteUser, getAnalytics, createInstructorAccount };

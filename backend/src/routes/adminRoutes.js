@@ -1,7 +1,7 @@
 const express = require('express');
 const { authenticate } = require('../middleware/auth');
 const { authorizeRoles } = require('../middleware/roleMiddleware');
-const { getUsers, getUserById, updateUserRoleController, updateUserController, deleteUser, getAnalytics } = require('../controllers/adminController');
+const { getUsers, getUserById, updateUserRoleController, updateUserController, deleteUser, getAnalytics, createInstructorAccount } = require('../controllers/adminController');
 
 const router = express.Router();
 
@@ -13,6 +13,7 @@ router.put('/users/:id', updateUserController);
 router.put('/users/:id/role', updateUserRoleController);
 router.delete('/users/:id', deleteUser);
 router.get('/analytics', getAnalytics);
+router.post('/instructors/create', createInstructorAccount);
 
 // Test endpoint
 router.get('/test', (req, res) => {

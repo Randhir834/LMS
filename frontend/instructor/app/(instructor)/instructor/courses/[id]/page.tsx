@@ -9,7 +9,6 @@ import { courseService } from '@/services/courseService';
 import { courseMaterialService, type CourseMaterial } from '@/services/courseMaterialService';
 import { useSocket } from '@/hooks/useSocket';
 import { socketService } from '@/services/socketService';
-import { useToast } from '@/components/ui/ToastContainer';
 import type { Course } from '@/types';
 
 export default function InstructorCourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,7 +39,6 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
 
   // Initialize Socket.IO connection
   const { onCourseMaterialUploaded, offCourseMaterialUploaded } = useSocket(userId);
-  const { addToast } = useToast();
 
   const fetchMaterials = useCallback(async () => {
     try {
@@ -114,14 +112,6 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
         
         // Add the new material to the list
         setMaterials(prevMaterials => [data.material, ...prevMaterials]);
-        
-        // Show a notification
-        addToast({
-          type: 'success',
-          title: 'New Material Added',
-          message: `"${data.material.title}" has been uploaded to this course`,
-          duration: 6000
-        });
       }
     };
 
@@ -130,7 +120,7 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
     return () => {
       offCourseMaterialUploaded(handleMaterialUploaded);
     };
-  }, [courseId, onCourseMaterialUploaded, offCourseMaterialUploaded, addToast]);
+  }, [courseId, onCourseMaterialUploaded, offCourseMaterialUploaded]);
 
   if (loading) {
     return (
