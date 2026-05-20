@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle, BookOpen, Users, Trophy } from 'lucide-react';
+import { ArrowRight, CheckCircle, BookOpen, Users, Trophy, Star, Menu, X, Quote, Zap, Target, Award } from 'lucide-react';
 import { trialService } from '@/services/trialService';
 
 export default function Home() {
@@ -10,6 +10,14 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,9 +48,9 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden">
       {/* Header */}
-      <header className="w-full py-4 pr-6 md:pr-12 pl-2 md:pl-4 flex justify-between items-center bg-white shadow-sm sticky top-0 z-50">
+      <header className={`w-full py-4 pr-6 md:pr-12 pl-2 md:pl-4 flex justify-between items-center bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all duration-300 ${scrollY > 50 ? 'shadow-lg py-3' : ''}`}>
         <div className="flex items-center">
-          <Link href="/" className="relative flex items-center justify-start shrink-0 transition-all duration-300 h-12 sm:h-14 md:h-16 w-auto">
+          <Link href="/" className="relative flex items-center justify-start shrink-0 transition-all duration-300 h-12 sm:h-14 md:h-16 w-auto hover:scale-105">
             <img
               src="/images/navbarlogo.png"
               alt="PlayFit LMS"
@@ -53,86 +61,236 @@ export default function Home() {
         
         <div className="flex items-center gap-8">
           <nav className="hidden md:flex items-center gap-8 font-medium text-dark-600">
-            <a href="#features" className="hover:text-primary-600 transition-colors">Features</a>
-            <a href="#trial" className="hover:text-primary-600 transition-colors">Free Trial</a>
+            <a href="#features" className="hover:text-primary-600 transition-colors relative group">
+              Features
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all group-hover:w-full"></span>
+            </a>
+            <a href="#testimonials" className="hover:text-primary-600 transition-colors relative group">
+              Testimonials
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all group-hover:w-full"></span>
+            </a>
+            <a href="#trial" className="hover:text-primary-600 transition-colors relative group">
+              Free Trial
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all group-hover:w-full"></span>
+            </a>
           </nav>
-          <Link href="/login" className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-full font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+          <Link href="/login" className="hidden md:flex bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-full font-medium transition-all shadow-md hover:shadow-lg hover:scale-105 flex items-center gap-2">
             Login
             <ArrowRight className="w-4 h-4" />
           </Link>
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
       </header>
 
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-40 bg-white/95 backdrop-blur-md animate-in slide-in-from-top duration-300">
+          <nav className="flex flex-col items-center justify-center h-full gap-8 text-xl font-medium">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="hover:text-primary-600 transition-colors">Features</a>
+            <a href="#testimonials" onClick={() => setMobileMenuOpen(false)} className="hover:text-primary-600 transition-colors">Testimonials</a>
+            <a href="#trial" onClick={() => setMobileMenuOpen(false)} className="hover:text-primary-600 transition-colors">Free Trial</a>
+            <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-full font-medium transition-all shadow-md flex items-center gap-2">
+              Login
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </nav>
+        </div>
+      )}
+
       {/* Hero Section */}
       <main className="flex-1 flex flex-col">
-        <section className="relative w-full px-6 py-20 md:py-32 flex flex-col md:flex-row items-center justify-center gap-12 bg-gradient-to-b from-primary-50 to-white">
-          <div className="md:w-1/2 flex flex-col gap-6 max-w-2xl z-10">
-            <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-800 px-4 py-1.5 rounded-full text-sm font-semibold w-fit">
-              <span className="relative flex h-2 w-2">
+        <section className="relative w-full px-6 py-20 md:py-32 flex flex-col md:flex-row items-center justify-center gap-12 bg-gradient-to-br from-primary-50 via-white to-secondary-50 overflow-hidden">
+          {/* Animated background elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-20 left-10 w-72 h-72 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+            <div className="absolute top-20 right-10 w-72 h-72 bg-secondary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+            <div className="absolute -bottom-32 left-1/2 w-96 h-96 bg-primary-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+          </div>
+          
+          <div className="md:w-1/2 flex flex-col gap-6 max-w-2xl z-10 animate-in slide-in-from-left duration-700">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-100 to-secondary-100 text-primary-800 px-5 py-2 rounded-full text-sm font-semibold w-fit shadow-sm hover:shadow-md transition-all cursor-default">
+              <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500"></span>
               </span>
+              <Zap className="w-4 h-4" />
               New Courses Available
             </div>
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-dark-900 leading-tight">
-              Elevate Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-secondary-600">Learning Journey</span> Today.
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-dark-900 leading-tight">
+              Elevate Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-secondary-500 to-primary-600 bg-size-200 animate-gradient">Learning Journey</span> Today.
             </h1>
-            <p className="text-lg md:text-xl text-dark-500 leading-relaxed max-w-xl">
+            <p className="text-lg md:text-xl text-dark-600 leading-relaxed max-w-xl">
               Join PlayFit LMS to access world-class educational materials, expert instructors, and a community dedicated to helping you achieve your goals.
             </p>
             <div className="flex flex-wrap gap-4 mt-4">
-              <a href="#trial" className="bg-dark-900 hover:bg-dark-800 text-white px-8 py-3.5 rounded-full font-semibold text-lg transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1">
+              <a href="#trial" className="group bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center gap-2">
                 Start Free Trial
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
-              <a href="#features" className="bg-white border-2 border-dark-200 hover:border-primary-500 hover:text-primary-600 text-dark-700 px-8 py-3.5 rounded-full font-semibold text-lg transition-all">
+              <a href="#features" className="group bg-white border-2 border-primary-200 hover:border-primary-500 hover:text-primary-600 text-dark-700 px-8 py-4 rounded-full font-semibold text-lg transition-all shadow-md hover:shadow-xl flex items-center gap-2">
                 Learn More
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
+            </div>
+            <div className="flex items-center gap-6 mt-6 pt-6 border-t border-gray-200">
+              <div className="flex -space-x-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-secondary-400 border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+                    {i}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-sm text-dark-500">Trusted by 10,000+ students</p>
+              </div>
             </div>
           </div>
           
-          <div className="md:w-1/2 relative flex justify-center items-center z-10 w-full max-w-lg">
-            <div className="absolute inset-0 bg-primary-200 rounded-full blur-3xl opacity-30 animate-pulse"></div>
-            {/* Abstract Graphic representation */}
-            <div className="w-full aspect-square bg-gradient-to-tr from-primary-100 to-secondary-50 rounded-3xl border-8 border-white shadow-2xl overflow-hidden relative flex flex-col">
-               <div className="flex-1 w-full bg-primary-50 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute top-10 left-10 w-32 h-32 bg-secondary-200 rounded-full mix-blend-multiply opacity-70 animate-blob"></div>
-                  <div className="absolute top-10 right-10 w-32 h-32 bg-primary-200 rounded-full mix-blend-multiply opacity-70 animate-blob animation-delay-2000"></div>
-                  <div className="absolute -bottom-8 left-20 w-32 h-32 bg-primary-300 rounded-full mix-blend-multiply opacity-70 animate-blob animation-delay-4000"></div>
+          <div className="md:w-1/2 relative flex justify-center items-center z-10 w-full max-w-lg animate-in slide-in-from-right duration-700 delay-200">
+            <div className="relative w-full aspect-square">
+              {/* Multi-layered glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-primary-400 to-secondary-400 rounded-full blur-3xl opacity-30 animate-pulse"></div>
+              <div className="absolute inset-4 bg-gradient-to-tr from-primary-300 to-secondary-300 rounded-full blur-2xl opacity-40 animate-blob"></div>
+              <div className="absolute inset-8 bg-gradient-to-tr from-primary-200 to-secondary-200 rounded-full blur-xl opacity-50 animate-blob animation-delay-2000"></div>
+              
+              {/* Main card container */}
+              <div className="relative w-full h-full bg-gradient-to-br from-white via-primary-50/30 to-secondary-50/30 rounded-[2.5rem] border-[12px] border-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col transform hover:scale-[1.02] hover:rotate-1 transition-all duration-700">
+                <div className="flex-1 w-full bg-gradient-to-br from-primary-50/50 via-white to-secondary-50/50 flex items-center justify-center relative overflow-hidden p-8">
+                  {/* Enhanced animated blobs */}
+                  <div className="absolute top-6 left-6 w-48 h-48 bg-gradient-to-br from-secondary-200 to-secondary-300 rounded-full mix-blend-multiply opacity-50 animate-blob blur-sm"></div>
+                  <div className="absolute top-6 right-6 w-48 h-48 bg-gradient-to-br from-primary-200 to-primary-300 rounded-full mix-blend-multiply opacity-50 animate-blob animation-delay-2000 blur-sm"></div>
+                  <div className="absolute -bottom-16 left-1/2 w-56 h-56 bg-gradient-to-br from-primary-300 to-secondary-300 rounded-full mix-blend-multiply opacity-50 animate-blob animation-delay-4000 blur-sm"></div>
                   
-                  <div className="z-10 bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-white flex flex-col gap-4 text-center">
-                     <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mx-auto shadow-inner text-white">
-                        <Trophy size={32} />
-                     </div>
-                     <div>
-                       <h3 className="font-bold text-dark-800 text-xl">Top Rated</h3>
-                       <p className="text-dark-500 text-sm">Learning Platform</p>
-                     </div>
+                  {/* Decorative grid pattern */}
+                  <div className="absolute inset-0 opacity-5" style={{
+                    backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+                    backgroundSize: '24px 24px'
+                  }}></div>
+                  
+                  {/* Main trophy card - Enhanced */}
+                  <div className="z-10 bg-white/95 backdrop-blur-xl p-10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] border border-white/80 flex flex-col gap-5 text-center transform hover:scale-105 hover:-translate-y-2 transition-all duration-500">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-3xl blur-2xl opacity-30 animate-pulse"></div>
+                      <div className="relative w-24 h-24 bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 rounded-3xl flex items-center justify-center mx-auto shadow-2xl text-white transform hover:rotate-12 hover:scale-110 transition-all duration-500">
+                        <Trophy size={48} className="drop-shadow-lg" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-dark-900 text-3xl tracking-tight">Top Rated</h3>
+                      <p className="text-dark-600 text-lg font-medium mt-1">Learning Platform</p>
+                      <div className="flex items-center justify-center gap-1.5 mt-3">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400 drop-shadow-sm" />
+                        ))}
+                        <span className="text-sm font-semibold text-dark-700 ml-2">5.0</span>
+                      </div>
+                      <p className="text-xs text-dark-500 mt-2 font-medium">Based on 10,000+ reviews</p>
+                    </div>
                   </div>
-               </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Feature Highlights */}
-        <section id="features" className="py-20 px-6 bg-white flex flex-col items-center">
+        <section id="features" className="py-24 px-6 bg-gradient-to-b from-white to-primary-50/30 flex flex-col items-center">
           <div className="max-w-6xl w-full">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-dark-800 mb-4">Why Choose PlayFit?</h2>
-              <p className="text-dark-500 max-w-2xl mx-auto text-lg">Our comprehensive learning management system provides everything you need to succeed.</p>
+              <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-800 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                <Zap className="w-4 h-4" />
+                Powerful Features
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-dark-900 mb-4">Why Choose PlayFit?</h2>
+              <p className="text-dark-600 max-w-2xl mx-auto text-lg">Our comprehensive learning management system provides everything you need to succeed in your educational journey.</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8">
               {[
-                { icon: BookOpen, title: "Expert Materials", desc: "Access premium securely protected documents, videos, and interactive content." },
-                { icon: Users, title: "Live Instructors", desc: "Learn directly from certified professionals through our interactive portal." },
-                { icon: Trophy, title: "Track Progress", desc: "Monitor your learning journey with detailed analytics and milestone tracking." }
+                { icon: BookOpen, title: "Expert Materials", desc: "Access premium securely protected documents, videos, and interactive content curated by industry experts.", color: "from-blue-500 to-blue-600" },
+                { icon: Users, title: "Live Instructors", desc: "Learn directly from certified professionals through our interactive portal with real-time Q&A sessions.", color: "from-purple-500 to-purple-600" },
+                { icon: Trophy, title: "Track Progress", desc: "Monitor your learning journey with detailed analytics, milestone tracking, and personalized insights.", color: "from-green-500 to-green-600" }
               ].map((feature, i) => (
-                <div key={i} className="bg-primary-50 rounded-2xl p-8 border border-primary-100 hover:shadow-xl hover:border-primary-300 transition-all group">
-                  <div className="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary-600 mb-6 group-hover:scale-110 transition-transform">
-                    <feature.icon size={28} />
+                <div key={i} className="group bg-white rounded-3xl p-8 border border-gray-100 hover:shadow-2xl hover:border-primary-200 transition-all duration-500 transform hover:-translate-y-2">
+                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl shadow-lg flex items-center justify-center text-white mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                    <feature.icon size={32} />
                   </div>
-                  <h3 className="text-xl font-bold text-dark-800 mb-3">{feature.title}</h3>
+                  <h3 className="text-2xl font-bold text-dark-900 mb-3 group-hover:text-primary-600 transition-colors">{feature.title}</h3>
                   <p className="text-dark-600 leading-relaxed">{feature.desc}</p>
+                  <div className="mt-6 pt-6 border-t border-gray-100">
+                    <a href="#trial" className="text-primary-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all">
+                      Learn more <ArrowRight className="w-4 h-4" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section id="testimonials" className="py-24 px-6 bg-white flex flex-col items-center">
+          <div className="max-w-6xl w-full">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 bg-secondary-100 text-secondary-800 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                <Star className="w-4 h-4 fill-current" />
+                Student Success Stories
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-dark-900 mb-4">What Our Students Say</h2>
+              <p className="text-dark-600 max-w-2xl mx-auto text-lg">Join thousands of satisfied students who have transformed their learning experience with PlayFit LMS.</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  name: "Sarah Johnson",
+                  role: "High School Student",
+                  content: "PlayFit LMS has completely changed how I study. The interactive materials and live instructor sessions have helped me improve my grades significantly.",
+                  rating: 5,
+                  avatar: "SJ"
+                },
+                {
+                  name: "Michael Chen",
+                  role: "College Student",
+                  content: "The progress tracking feature is amazing. I can see exactly where I need to focus and the instructors are always available to help clarify doubts.",
+                  rating: 5,
+                  avatar: "MC"
+                },
+                {
+                  name: "Emily Rodriguez",
+                  role: "Professional Learner",
+                  content: "I've tried many online learning platforms, but PlayFit LMS stands out. The quality of content and the community support is unparalleled.",
+                  rating: 5,
+                  avatar: "ER"
+                }
+              ].map((testimonial, i) => (
+                <div key={i} className="bg-gradient-to-br from-primary-50 to-secondary-50 rounded-3xl p-8 border border-primary-100 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, j) => (
+                      <Star key={j} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <Quote className="w-8 h-8 text-primary-300 mb-4" />
+                  <p className="text-dark-700 leading-relaxed mb-6">"{testimonial.content}"</p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-white font-bold">
+                      {testimonial.avatar}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-dark-900">{testimonial.name}</h4>
+                      <p className="text-sm text-dark-500">{testimonial.role}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -140,53 +298,73 @@ export default function Home() {
         </section>
 
         {/* Form Section */}
-        <section id="trial" className="py-24 px-6 bg-dark-900 relative overflow-hidden flex justify-center">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-600 rounded-full mix-blend-overlay blur-3xl opacity-20"></div>
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-secondary-500 rounded-full mix-blend-overlay blur-3xl opacity-20"></div>
+        <section id="trial" className="py-24 px-6 bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900 relative overflow-hidden flex justify-center">
+          {/* Animated background elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-primary-600 rounded-full mix-blend-overlay blur-3xl opacity-20 animate-blob"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary-500 rounded-full mix-blend-overlay blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+            <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-primary-400 rounded-full mix-blend-overlay blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
+          </div>
           
           <div className="max-w-6xl w-full grid md:grid-cols-2 gap-16 relative z-10 items-center">
-            <div className="text-white space-y-6">
-              <h2 className="text-4xl md:text-5xl font-bold leading-tight">Ready to transform?</h2>
+            <div className="text-white space-y-8">
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-semibold">
+                <Zap className="w-4 h-4" />
+                Limited Time Offer
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold leading-tight">Ready to Transform Your Learning?</h2>
               <p className="text-dark-200 text-lg md:text-xl leading-relaxed">
                 Book a free trial today and get 7 days of unlimited access to our premium course materials and instructor guidance. No credit card required.
               </p>
               <ul className="space-y-4 mt-8">
-                {['Personalized skill assessment', 'Access to beginner courses', '1-on-1 instructor consultation', 'Progress tracking dashboard'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-dark-100">
-                    <CheckCircle className="text-primary-400 w-6 h-6 flex-shrink-0" />
-                    <span className="text-lg">{item}</span>
+                {[
+                  { icon: CheckCircle, text: "Personalized skill assessment" },
+                  { icon: CheckCircle, text: "Access to beginner courses" },
+                  { icon: CheckCircle, text: "1-on-1 instructor consultation" },
+                  { icon: CheckCircle, text: "Progress tracking dashboard" }
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-dark-100 group">
+                    <div className="w-8 h-8 bg-primary-500/20 rounded-full flex items-center justify-center group-hover:bg-primary-500/30 transition-colors">
+                      <item.icon className="text-primary-400 w-5 h-5 flex-shrink-0" />
+                    </div>
+                    <span className="text-lg">{item.text}</span>
                   </li>
                 ))}
               </ul>
             </div>
             
-            <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 border border-border">
-              <h3 className="text-2xl font-bold text-text-primary text-center mb-2">Book Your Free Trial</h3>
-              <p className="text-center text-sm text-text-muted mb-8">Fill out the form below and we&apos;ll be in touch shortly.</p>
+            <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 border border-white/20 backdrop-blur-xl transform hover:scale-105 transition-transform duration-500">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <Zap className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-dark-900 mb-2">Book Your Free Trial</h3>
+                <p className="text-sm text-dark-500">Fill out the form below and we&apos;ll be in touch shortly.</p>
+              </div>
               
               {submitted ? (
-                <div className="bg-primary-50 border border-primary-200 text-primary-800 rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in zoom-in duration-300">
-                  <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-8 h-8 text-primary-600" />
+                <div className="bg-gradient-to-br from-primary-50 to-secondary-50 border border-primary-200 text-primary-800 rounded-2xl p-8 flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in zoom-in duration-300">
+                  <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center shadow-lg">
+                    <CheckCircle className="w-10 h-10 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold mb-1">Trial Requested!</h4>
+                    <h4 className="text-2xl font-bold mb-2">Trial Requested! 🎉</h4>
                     <p className="text-primary-700">Thanks for reaching out. We'll contact you within 24 hours.</p>
                   </div>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {error && (
-                    <div className="mb-4 p-3 rounded-lg bg-hover text-error text-sm text-center">
+                    <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm text-center animate-in shake-in duration-300">
                       {error}
                     </div>
                   )}
                   
                   {/* Name field */}
                   <div className="space-y-1.5">
-                    <label htmlFor="name" className="block text-sm font-medium text-text-primary">Full Name</label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+                    <label htmlFor="name" className="block text-sm font-semibold text-dark-900">Full Name</label>
+                    <div className="relative group">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-400 group-focus-within:text-primary-500 transition-colors">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                       </div>
                       <input 
@@ -196,7 +374,7 @@ export default function Home() {
                         required
                         value={formData.name}
                         onChange={handleChange}
-                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-border text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                        className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                         placeholder="John Doe"
                       />
                     </div>
@@ -204,9 +382,9 @@ export default function Home() {
 
                   {/* Email field */}
                   <div className="space-y-1.5">
-                    <label htmlFor="email" className="block text-sm font-medium text-text-primary">Email Address</label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+                    <label htmlFor="email" className="block text-sm font-semibold text-dark-900">Email Address</label>
+                    <div className="relative group">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-400 group-focus-within:text-primary-500 transition-colors">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                       </div>
                       <input 
@@ -216,7 +394,7 @@ export default function Home() {
                         required
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-border text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                        className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                         placeholder="john@example.com"
                       />
                     </div>
@@ -224,9 +402,9 @@ export default function Home() {
 
                   {/* Phone field */}
                   <div className="space-y-1.5">
-                    <label htmlFor="phone" className="block text-sm font-medium text-text-primary">Phone Number</label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+                    <label htmlFor="phone" className="block text-sm font-semibold text-dark-900">Phone Number</label>
+                    <div className="relative group">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-400 group-focus-within:text-primary-500 transition-colors">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                       </div>
                       <input 
@@ -236,7 +414,7 @@ export default function Home() {
                         required
                         value={formData.phone}
                         onChange={handleChange}
-                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-border text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                        className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                         placeholder="(555) 123-4567"
                       />
                     </div>
@@ -244,9 +422,9 @@ export default function Home() {
 
                   {/* Grade field */}
                   <div className="space-y-1.5">
-                    <label htmlFor="grade" className="block text-sm font-medium text-text-primary">Grade / Class</label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+                    <label htmlFor="grade" className="block text-sm font-semibold text-dark-900">Grade / Class</label>
+                    <div className="relative group">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-400 group-focus-within:text-primary-500 transition-colors">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                       </div>
                       <input 
@@ -256,7 +434,7 @@ export default function Home() {
                         required
                         value={formData.grade}
                         onChange={handleChange}
-                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-border text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                        className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 text-sm text-dark-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                         placeholder="e.g. 10th Grade"
                       />
                     </div>
@@ -265,18 +443,21 @@ export default function Home() {
                   <button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full py-3.5 rounded-xl bg-primary-500 text-white font-medium text-sm hover:bg-primary-600 active:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-sm mt-6"
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold text-sm disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2 mt-6"
                   >
                     {loading ? (
-                      'Submitting...'
+                      <>
+                        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                        Submitting...
+                      </>
                     ) : (
                       <>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         Claim My Free Trial
+                        <ArrowRight className="w-5 h-5" />
                       </>
                     )}
                   </button>
-                  <p className="text-center text-xs text-text-muted mt-4">
+                  <p className="text-center text-xs text-dark-500 mt-4">
                     By submitting, you agree to our Terms of Service and Privacy Policy.
                   </p>
                 </form>
@@ -287,39 +468,55 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-dark-950 text-dark-400 py-12 px-6 border-t border-dark-800">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8">
+      <footer className="bg-black text-gray-300 py-16 px-6 border-t border-gray-800">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <Link href="/" className="relative flex items-center justify-center shrink-0 transition-all duration-300 h-10 w-auto">
+            <div className="flex items-center gap-2 mb-6">
+              <Link href="/" className="relative flex items-center justify-center shrink-0 transition-all duration-300 h-12 w-auto hover:scale-105">
                 <img
                   src="/images/navbarlogo.png"
                   alt="PlayFit LMS"
-                  className="w-full h-full object-contain max-w-full max-h-full filter brightness-0 invert"
+                  className="w-full h-full object-contain max-w-full max-h-full"
                 />
               </Link>
             </div>
-            <p className="max-w-md">Empowering your learning journey through expert-led courses and a supportive community platform.</p>
+            <p className="max-w-md text-gray-400 leading-relaxed mb-6">Empowering your learning journey through expert-led courses and a supportive community platform. Join thousands of students achieving their goals.</p>
+            <div className="flex gap-4">
+              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-primary-600 rounded-full flex items-center justify-center transition-all hover:scale-110">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </a>
+              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-primary-600 rounded-full flex items-center justify-center transition-all hover:scale-110">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              </a>
+              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-primary-600 rounded-full flex items-center justify-center transition-all hover:scale-110">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+              </a>
+              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-primary-600 rounded-full flex items-center justify-center transition-all hover:scale-110">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              </a>
+            </div>
           </div>
           <div>
-            <h4 className="text-white font-semibold mb-4">Platform</h4>
-            <ul className="space-y-2">
-              <li><a href="#" className="hover:text-primary-400 transition-colors">Courses</a></li>
-              <li><a href="#" className="hover:text-primary-400 transition-colors">Instructors</a></li>
-              <li><a href="#" className="hover:text-primary-400 transition-colors">Pricing</a></li>
+            <h4 className="text-white font-semibold mb-6 text-lg">Platform</h4>
+            <ul className="space-y-3">
+              <li><a href="#features" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group"><ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />Features</a></li>
+              <li><a href="#testimonials" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group"><ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />Testimonials</a></li>
+              <li><a href="#trial" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group"><ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />Free Trial</a></li>
+              <li><a href="/login" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group"><ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />Login</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-semibold mb-4">Legal</h4>
-            <ul className="space-y-2">
-              <li><a href="#" className="hover:text-primary-400 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-primary-400 transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-primary-400 transition-colors">Contact Us</a></li>
+            <h4 className="text-white font-semibold mb-6 text-lg">Legal</h4>
+            <ul className="space-y-3">
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group"><ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />Privacy Policy</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group"><ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />Terms of Service</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group"><ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />Contact Us</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group"><ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />FAQ</a></li>
             </ul>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-dark-800 text-center text-sm">
-          &copy; {new Date().getFullYear()} PlayFit LMS. All rights reserved.
+        <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
+          <p>&copy; {new Date().getFullYear()} PlayFit LMS. All rights reserved. Made with ❤️ for learners worldwide.</p>
         </div>
       </footer>
     </div>
