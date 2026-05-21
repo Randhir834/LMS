@@ -1,28 +1,44 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { BookOpen, Video, ClipboardList, Users, Loader2, ChevronRight } from 'lucide-react';
 import { courseService } from '@/services/courseService';
 import type { Course } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
+import { useSocket } from '@/hooks/useSocket';
 
 export default function InstructorHomePage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { onCourseAssigned, offCourseAssigned } = useSocket(user?.id);
+
+  const fetchCourses = useCallback(async () => {
+    try {
+      const data = await courseService.getMyCourses();
+      setCourses(data.courses || []);
+    } catch {
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const data = await courseService.getMyCourses();
-        setCourses(data.courses || []);
-      } catch {
-        setCourses([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCourses();
-  }, []);
+  }, [fetchCourses]);
+
+  useEffect(() => {
+    onCourseAssigned(() => {
+      console.log('New course assigned, refreshing dashboard...');
+      fetchCourses();
+    });
+
+    return () => {
+      offCourseAssigned();
+    };
+  }, [onCourseAssigned, offCourseAssigned, fetchCourses]);
 
   const statusColor: Record<string, string> = {
     draft: 'bg-[#E2E8F0] text-[#475569]',

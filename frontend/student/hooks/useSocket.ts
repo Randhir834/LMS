@@ -19,9 +19,7 @@ export const useSocket = (userId?: number) => {
   return {
     socket: socketService.getSocket(),
     isConnected: socketService.isSocketConnected(),
-    onCourseMaterialUploaded: socketService.onCourseMaterialUploaded.bind(socketService),
-    offCourseMaterialUploaded: socketService.offCourseMaterialUploaded.bind(socketService),
-    onCourseAssigned: socketService.onCourseAssigned.bind(socketService),
-    offCourseAssigned: socketService.offCourseAssigned.bind(socketService)
+    onLiveClassScheduled: socketService.onLiveClassScheduled.bind(socketService),
+    offLiveClassScheduled: socketService.offLiveClassScheduled.bind(socketService)
   };
 };

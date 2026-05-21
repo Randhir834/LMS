@@ -88,7 +88,7 @@ export default function AdminsPage() {
               onClick={() => setSelectedUserId(user.id)}
               className="cursor-pointer"
             >
-              <UserCard user={user} href="#" role="admin" />
+              <UserCard user={user} role="admin" />
             </div>
           ))}
         </div>

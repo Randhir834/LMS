@@ -106,6 +106,16 @@ const createCourse = async (req, res, next) => {
       message: 'Course created successfully and assigned to instructor(s)',
       course,
     });
+
+    // Emit real-time update to assigned instructors
+    if (global.io && instructor_ids && instructor_ids.length > 0) {
+      instructor_ids.forEach(instructorId => {
+        global.io.to(`user-${instructorId}`).emit('course-assigned', { 
+          courseId: course.id, 
+          title: course.title 
+        });
+      });
+    }
   } catch (error) {
     next(error);
   }

@@ -532,7 +532,6 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
                             value={material.title}
                             onChange={(e) => updateNewMaterialTitle(material.id, e.target.value)}
                             placeholder="Enter material title"
-                            size="sm"
                           />
                         </div>
                         <div>
@@ -543,7 +542,6 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
                             value={material.description}
                             onChange={(e) => updateNewMaterialDescription(material.id, e.target.value)}
                             placeholder="Optional description"
-                            size="sm"
                           />
                         </div>
                       </div>

@@ -71,6 +71,44 @@ class SocketService {
     }
   }
 
+  joinAdminRoom() {
+    if (this.socket) {
+      this.socket.emit('join-admin-room');
+    }
+  }
+
+  onProfileUpdate(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('profile-update', callback);
+    }
+  }
+
+  offProfileUpdate(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('profile-update', callback);
+      } else {
+        this.socket.off('profile-update');
+      }
+    }
+  }
+
+  onUserUpdate(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('user-update', callback);
+    }
+  }
+
+  offUserUpdate(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('user-update', callback);
+      } else {
+        this.socket.off('user-update');
+      }
+    }
+  }
+
   getSocket() {
     return this.socket;
   }

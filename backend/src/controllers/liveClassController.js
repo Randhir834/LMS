@@ -87,6 +87,23 @@ const createLiveClassController = async (req, res, next) => {
       message: 'Live class scheduled successfully',
       liveClass,
     });
+
+    // Emit real-time update to enrolled students
+    if (global.io) {
+      try {
+        const { findStudentsByCourse } = require('../services/enrollmentService');
+        const studentIds = await findStudentsByCourse(course_id);
+        studentIds.forEach(studentId => {
+          global.io.to(`user-${studentId}`).emit('live-class-scheduled', {
+            liveClassId: liveClass.id,
+            title: liveClass.title,
+            courseId: course_id
+          });
+        });
+      } catch (err) {
+        console.error('Failed to emit live class notification:', err);
+      }
+    }
   } catch (error) {
     next(error);
   }

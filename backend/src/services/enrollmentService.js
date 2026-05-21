@@ -96,10 +96,19 @@ const findAllEnrollments = async () => {
   return result.rows;
 };
 
+const findStudentsByCourse = async (course_id) => {
+  const result = await query(
+    'SELECT user_id FROM enrollments WHERE course_id = $1',
+    [course_id]
+  );
+  return result.rows.map(row => row.user_id);
+};
+
 module.exports = {
   createEnrollment,
   findEnrollmentsByUser,
   findEnrollmentById,
   findEnrollmentByUserAndCourse,
   findAllEnrollments,
+  findStudentsByCourse,
 };

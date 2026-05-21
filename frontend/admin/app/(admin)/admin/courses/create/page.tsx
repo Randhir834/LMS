@@ -215,7 +215,7 @@ export default function AdminCreateCoursePage() {
         ...form,
         price: parseFloat(form.price) || 0,
         duration_value: parseInt(form.duration_value) || 1,
-        category_id: form.category_id ? parseInt(form.category_id) : null,
+        category_id: form.category_id ? parseInt(form.category_id) : undefined,
         what_you_learn: whatYouLearnItems.filter(item => item.trim()).join('\n'),
         requirements: requirementItems.filter(item => item.trim()).join('\n'),
         instructor_ids: selectedInstructors,
@@ -639,7 +639,6 @@ export default function AdminCreateCoursePage() {
                           value={material.title}
                           onChange={(e) => updateMaterialTitle(material.id, e.target.value)}
                           placeholder="Enter material title"
-                          size="sm"
                         />
                       </div>
                       <div>
@@ -650,7 +649,6 @@ export default function AdminCreateCoursePage() {
                           value={material.description}
                           onChange={(e) => updateMaterialDescription(material.id, e.target.value)}
                           placeholder="Optional description"
-                          size="sm"
                         />
                       </div>
                     </div>

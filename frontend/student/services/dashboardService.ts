@@ -68,9 +68,9 @@ export const dashboardService = {
       ]);
 
       return {
-        enrolledCourses: enrollments.data?.length || 0,
-        liveClasses: liveClasses.data?.filter((cls: any) => cls.status === 'scheduled').length || 0,
-        assignments: mySubmissions.data?.length || 0,
+        enrolledCourses: enrollments.enrollments?.length || 0,
+        liveClasses: liveClasses.liveClasses?.filter((cls: any) => cls.status === 'scheduled').length || 0,
+        assignments: mySubmissions.submissions?.length || 0,
         achievements: 6 // This would come from an achievements API when implemented
       };
     } catch (error) {
@@ -89,15 +89,15 @@ export const dashboardService = {
     try {
       const enrollments = await enrollmentService.getEnrollments();
       
-      if (!enrollments.data) return [];
+      if (!enrollments.enrollments) return [];
 
       const coursesWithProgress = await Promise.all(
-        enrollments.data.map(async (enrollment: any) => {
+        enrollments.enrollments.map(async (enrollment: any) => {
           try {
             const progress = await progressService.getCourseProgress(enrollment.course_id);
             return {
               id: enrollment.course_id,
-              title: enrollment.course?.title || 'Unknown Course',
+              title: enrollment.course_title || 'Unknown Course',
               progress: progress.data?.progress_percentage || 0,
               totalLessons: progress.data?.total_lessons || 12,
               completedLessons: progress.data?.completed_lessons || 0
@@ -105,7 +105,7 @@ export const dashboardService = {
           } catch (error) {
             return {
               id: enrollment.course_id,
-              title: enrollment.course?.title || 'Unknown Course',
+              title: enrollment.course_title || 'Unknown Course',
               progress: 0,
               totalLessons: 12,
               completedLessons: 0
@@ -126,9 +126,9 @@ export const dashboardService = {
     try {
       const liveClasses = await liveClassService.getLiveClasses();
       
-      if (!liveClasses.data) return null;
+      if (!liveClasses.liveClasses) return null;
 
-      const scheduledClasses = liveClasses.data
+      const scheduledClasses = liveClasses.liveClasses
         .filter((cls: any) => cls.status === 'scheduled')
         .sort((a: any, b: any) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
 
@@ -138,10 +138,10 @@ export const dashboardService = {
       return {
         id: nextClass.id,
         title: nextClass.title,
-        course_name: nextClass.course?.title || 'Unknown Course',
+        course_name: nextClass.course_title || 'Unknown Course',
         scheduled_at: nextClass.scheduled_at,
         meet_link: nextClass.meet_link,
-        instructor_name: nextClass.instructor?.name || 'Instructor',
+        instructor_name: nextClass.instructor_name || 'Instructor',
         duration_minutes: nextClass.duration_minutes || 60
       };
     } catch (error) {
@@ -155,9 +155,9 @@ export const dashboardService = {
     try {
       const notifications = await notificationService.getNotifications();
       
-      if (!notifications.data) return [];
+      if (!notifications.notifications) return [];
 
-      return notifications.data
+      return notifications.notifications
         .filter((notif: any) => notif.type === 'announcement')
         .map((notif: any) => ({
           id: notif.id,

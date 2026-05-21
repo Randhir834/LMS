@@ -50,43 +50,18 @@ class SocketService {
     return this.isConnected && this.socket?.connected;
   }
 
-  // Listen for course material uploads
-  onCourseMaterialUploaded(callback: (data: any) => void) {
+  onLiveClassScheduled(callback: (data: any) => void) {
     if (this.socket) {
-      this.socket.on('course-material-uploaded', callback);
+      this.socket.on('live-class-scheduled', callback);
     }
   }
 
-  // Remove course material upload listener
-  offCourseMaterialUploaded(callback?: (data: any) => void) {
+  offLiveClassScheduled(callback?: (data: any) => void) {
     if (this.socket) {
       if (callback) {
-        this.socket.off('course-material-uploaded', callback);
+        this.socket.off('live-class-scheduled', callback);
       } else {
-        this.socket.off('course-material-uploaded');
-      }
-    }
-  }
-
-  // Join admin room (for admin users)
-  joinAdminRoom() {
-    if (this.socket) {
-      this.socket.emit('join-admin-room');
-    }
-  }
-
-  onCourseAssigned(callback: (data: any) => void) {
-    if (this.socket) {
-      this.socket.on('course-assigned', callback);
-    }
-  }
-
-  offCourseAssigned(callback?: (data: any) => void) {
-    if (this.socket) {
-      if (callback) {
-        this.socket.off('course-assigned', callback);
-      } else {
-        this.socket.off('course-assigned');
+        this.socket.off('live-class-scheduled');
       }
     }
   }

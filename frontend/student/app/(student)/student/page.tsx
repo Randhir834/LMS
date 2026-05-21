@@ -8,33 +8,47 @@ import {
 import StudentDashboardLayout from '@/components/layouts/StudentDashboardLayout';
 import { dashboardService, DashboardData } from '@/services/dashboardService';
 import { userService, UserProfile } from '@/services/userService';
+import { useSocket } from '@/hooks/useSocket';
+import { useCallback } from 'react';
 
 export default function StudentHomePage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { onLiveClassScheduled, offLiveClassScheduled } = useSocket(user?.id);
+
+  const fetchAll = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [dashData, profile] = await Promise.all([
+        dashboardService.getDashboardData(),
+        userService.getProfile().catch(() => null)
+      ]);
+      setDashboardData(dashData);
+      setUser(profile);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        setLoading(true);
-        const [dashData, profile] = await Promise.all([
-          dashboardService.getDashboardData(),
-          userService.getProfile().catch(() => null)
-        ]);
-        setDashboardData(dashData);
-        setUser(profile);
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAll();
-  }, []);
+  }, [fetchAll]);
+
+  useEffect(() => {
+    onLiveClassScheduled(() => {
+      console.log('New live class scheduled, refreshing dashboard...');
+      fetchAll();
+    });
+
+    return () => {
+      offLiveClassScheduled();
+    };
+  }, [onLiveClassScheduled, offLiveClassScheduled, fetchAll]);
 
   if (loading) {
     return (

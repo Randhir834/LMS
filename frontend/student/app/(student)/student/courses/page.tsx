@@ -40,7 +40,7 @@ function StudentCoursesContent() {
       
       // Check enrollment status for each course
       const coursesWithEnrollment = await Promise.all(
-        (data.courses || []).map(async (course) => {
+        (data.courses || []).map(async (course: Course) => {
           try {
             const enrollmentData = await enrollmentService.checkEnrollment(course.id);
             return {
@@ -80,13 +80,13 @@ function StudentCoursesContent() {
     fetchCategories();
   }, []);
 
-  const handleFiltersChange = (newFilters: typeof filters) => {
+  const handleFiltersChange = (newFilters: any) => {
     setFilters(newFilters);
     
     // Update URL params
     const params = new URLSearchParams();
     Object.entries(newFilters).forEach(([key, value]) => {
-      if (value) params.set(key, value);
+      if (value) params.set(key, String(value));
     });
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
