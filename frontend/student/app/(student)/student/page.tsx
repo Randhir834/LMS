@@ -2,39 +2,53 @@
 
 import { useState, useEffect } from 'react';
 import {
-  BookOpen, Video, ClipboardList, Award, Star, Target, Trophy, Loader2, Calendar,
-  User, ChevronRight, Megaphone, BarChart3
+  BookOpen, Video, ClipboardList, Loader2,
+  ChevronRight, Megaphone
 } from 'lucide-react';
 import StudentDashboardLayout from '@/components/layouts/StudentDashboardLayout';
 import { dashboardService, DashboardData } from '@/services/dashboardService';
 import { userService, UserProfile } from '@/services/userService';
+import { useSocket } from '@/hooks/useSocket';
+import { useCallback } from 'react';
 
 export default function StudentHomePage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { onLiveClassScheduled, offLiveClassScheduled } = useSocket(user?.id);
+
+  const fetchAll = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [dashData, profile] = await Promise.all([
+        dashboardService.getDashboardData(),
+        userService.getProfile().catch(() => null)
+      ]);
+      setDashboardData(dashData);
+      setUser(profile);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        setLoading(true);
-        const [dashData, profile] = await Promise.all([
-          dashboardService.getDashboardData(),
-          userService.getProfile().catch(() => null)
-        ]);
-        setDashboardData(dashData);
-        setUser(profile);
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAll();
-  }, []);
+  }, [fetchAll]);
+
+  useEffect(() => {
+    onLiveClassScheduled(() => {
+      console.log('New live class scheduled, refreshing dashboard...');
+      fetchAll();
+    });
+
+    return () => {
+      offLiveClassScheduled();
+    };
+  }, [onLiveClassScheduled, offLiveClassScheduled, fetchAll]);
 
   if (loading) {
     return (
@@ -64,12 +78,9 @@ export default function StudentHomePage() {
     );
   }
 
-  const stats = dashboardData?.stats || { enrolledCourses: 0, liveClasses: 0, assignments: 0, achievements: 0 };
+  const stats = dashboardData?.stats || { enrolledCourses: 0, liveClasses: 0, assignments: 0 };
   const courses = dashboardData?.courses?.length ? dashboardData.courses : [];
-  const nextLiveClass = dashboardData?.nextLiveClass;
   const announcements = dashboardData?.announcements || [];
-  const achievements = dashboardData?.achievements || [];
-  const overallProgress = dashboardData?.overallProgress || 0;
 
   const displayName = user?.name || 'Student';
 
@@ -149,12 +160,11 @@ export default function StudentHomePage() {
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 mb-6 sm:mb-8">
             {[
               { label: 'Enrolled Courses', value: String(stats.enrolledCourses), icon: BookOpen, iconBg: 'bg-[#DCFCE7]', iconColor: 'text-[#1B8A44]', link: 'View all' },
               { label: 'Live Classes', value: String(stats.liveClasses), icon: Video, iconBg: 'bg-[#FEF3C7]', iconColor: 'text-[#D97706]', link: 'View schedule' },
               { label: 'Assignments', value: String(stats.assignments), icon: ClipboardList, iconBg: 'bg-[#DBEAFE]', iconColor: 'text-[#2563EB]', link: 'View all' },
-              { label: 'Achievements', value: String(stats.achievements), icon: Award, iconBg: 'bg-[#F3E8FF]', iconColor: 'text-[#9333EA]', link: 'View all' },
             ].map((card, index) => (
               <div key={index} className="bg-white rounded-xl border border-[#E2E8F0] p-3 sm:p-4 lg:p-5">
                 <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
@@ -305,115 +315,7 @@ export default function StudentHomePage() {
           </div>
         </main>
 
-        {/* Right Sidebar */}
-        <aside className="w-full xl:w-80 border-t xl:border-t-0 xl:border-l border-[#E2E8F0] p-4 md:p-6 lg:p-8 xl:pr-8 space-y-6">
-          {/* Next Live Class */}
-          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-            <h3 className="text-sm font-semibold text-[#1E293B] mb-4">Next Live Class</h3>
-            {nextLiveClass ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#DBEAFE] rounded-lg flex items-center justify-center">
-                    <Video size={20} className="text-[#2563EB]" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-[#64748B]">{nextLiveClass.course_name}</p>
-                    <h4 className="font-semibold text-[#1E293B] text-sm">{nextLiveClass.title}</h4>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-[#64748B]">
-                    <Calendar size={14} />
-                    <span>{new Date(nextLiveClass.scheduled_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} • {new Date(nextLiveClass.scheduled_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-[#64748B]">
-                    <User size={14} />
-                    <span>with {nextLiveClass.instructor_name}</span>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => nextLiveClass.meet_link && window.open(nextLiveClass.meet_link, '_blank')}
-                  className="w-full py-2.5 bg-[#1B8A44] text-white rounded-lg text-sm font-medium hover:bg-[#166534] transition-colors flex items-center justify-center gap-2"
-                >
-                  <Video size={16} /> Join Live Class
-                </button>
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <Video className="size-8 text-[#CBD5E1] mx-auto mb-3" />
-                <p className="text-sm text-[#64748B]">No upcoming live classes</p>
-              </div>
-            )}
-          </div>
 
-          {/* My Progress */}
-          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-            <h3 className="text-sm font-semibold text-[#1E293B] mb-4">My Progress</h3>
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-[#64748B]">Overall Progress</span>
-                <span className="text-sm font-bold text-[#1B8A44]">{overallProgress}%</span>
-              </div>
-              <div className="w-full bg-[#F1F5F9] rounded-full h-2">
-                <div className="bg-[#1B8A44] h-2 rounded-full" style={{ width: `${overallProgress}%` }}></div>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {courses.length > 0 ? courses.map((course) => (
-                <div key={course.id}>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-4 h-4 flex items-center justify-center">
-                        <BarChart3 size={12} className="text-[#64748B]" />
-                      </span>
-                      <span className="text-xs text-[#64748B]">{course.title}</span>
-                    </div>
-                    <span className="text-xs font-medium text-[#1B8A44]">{course.progress}%</span>
-                  </div>
-                  <div className="w-full bg-[#F1F5F9] rounded-full h-1">
-                    <div className="bg-[#1B8A44] h-1 rounded-full" style={{ width: `${course.progress}%` }}></div>
-                  </div>
-                </div>
-              )) : (
-                <p className="text-xs text-[#64748B] text-center py-2">No courses to track</p>
-              )}
-            </div>
-            <button className="w-full mt-4 text-xs text-[#1B8A44] font-medium flex items-center justify-center gap-1 hover:underline">
-              View Detailed Progress <ChevronRight size={12} />
-            </button>
-          </div>
-
-          {/* Achievements */}
-          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-[#1E293B]">Achievements</h3>
-              <button className="text-xs text-[#1B8A44] font-medium hover:underline">View All</button>
-            </div>
-            <div className="grid grid-cols-4 gap-3">
-              {(achievements.length > 0 ? achievements : achievementBadges).map((achievement) => (
-                <div key={achievement.id} className="flex flex-col items-center">
-                  <div className="relative w-11 h-12 flex items-center justify-center mb-1.5">
-                    <svg viewBox="0 0 44 48" className="w-full h-full">
-                      <polygon 
-                        points="22,2 40,12 40,32 22,44 4,32 4,12" 
-                        fill={achievement.color?.replace?.('bg-[', '')?.replace?.(']', '') || achievement.color}
-                        stroke={achievement.borderColor?.replace?.('border-[', '')?.replace?.(']', '') || achievement.borderColor}
-                        strokeWidth="2"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center pb-1">
-                      {achievement.icon === 'book' && <BookOpen size={14} className="text-white" />}
-                      {achievement.icon === 'star' && <Star size={14} className="text-white" />}
-                      {achievement.icon === 'flame' && <Target size={14} className="text-white" />}
-                      {achievement.icon === 'trophy' && <Trophy size={14} className="text-white" />}
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-center text-[#64748B] leading-tight font-medium">{achievement.title}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
       </div>
     </StudentDashboardLayout>
   );

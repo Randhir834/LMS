@@ -27,6 +27,11 @@ export const userService = {
     return response.data.user;
   },
 
+  changePassword: async (oldPassword: string, newPassword: string, confirmPassword: string): Promise<any> => {
+    const response = await api.post('/users/change-password', { oldPassword, newPassword, confirmPassword });
+    return response.data;
+  },
+
   logout: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');

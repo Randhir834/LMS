@@ -7,8 +7,10 @@ import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { courseService } from '@/services/courseService';
 import { courseMaterialService, type CourseMaterial } from '@/services/courseMaterialService';
+import { enrollmentService, type CourseEnrollment } from '@/services/enrollmentService';
 import { useSocket } from '@/hooks/useSocket';
 import { socketService } from '@/services/socketService';
+import ScheduleLiveClassModal from '@/components/ScheduleLiveClassModal';
 import type { Course } from '@/types';
 
 export default function InstructorCourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,11 +18,12 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
   const courseId = Number(id);
 
   const [course, setCourse] = useState<Course | null>(null);
-  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
   const [materials, setMaterials] = useState<CourseMaterial[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(true);
   const [materialsLoading, setMaterialsLoading] = useState(true);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   // Get user ID from localStorage or auth context
   const [userId, setUserId] = useState<number | undefined>();
@@ -73,10 +76,8 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
     const fetchEnrollments = async () => {
       try {
         setEnrollmentsLoading(true);
-        // This would need to be implemented in the backend
-        // const response = await enrollmentService.getCourseEnrollments(courseId);
-        // setEnrollments(response.enrollments || []);
-        setEnrollments([]); // Placeholder
+        const response = await enrollmentService.getCourseEnrollments(courseId);
+        setEnrollments(response.enrollments || []);
       } catch (error) {
         console.error('Failed to fetch enrollments:', error);
         setEnrollments([]);
@@ -171,6 +172,17 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
 
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto space-y-6">
+      {/* Schedule Live Class Modal */}
+      <ScheduleLiveClassModal
+        courseId={courseId}
+        courseName={course?.title || ''}
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        onSuccess={() => {
+          // Optionally refresh data here if needed
+        }}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex-1">
@@ -196,6 +208,14 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
               Analytics
             </Button>
           </Link>
+          <Button
+            onClick={() => setShowScheduleModal(true)}
+            size="sm"
+            className="flex items-center gap-2 bg-[#1B8A44] hover:bg-[#1B8A44]/90 text-white"
+          >
+            <Calendar className="size-4" />
+            Schedule Live Class
+          </Button>
           <Link href={`/student/course/${courseId}`}>
             <Button variant="ghost" size="sm" className="flex items-center gap-2">
               <Eye className="size-4" />
@@ -206,7 +226,7 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
@@ -228,16 +248,6 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
             <div className="text-center">
               <div className="text-2xl font-bold text-[#D97706]">{course.total_lessons || 0}</div>
               <div className="text-sm text-[#64748B]">Total Lessons</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[#7C3AED]">
-                {course.price === 0 ? 'Free' : `₹${course.price.toLocaleString()}`}
-              </div>
-              <div className="text-sm text-[#64748B]">Course Price</div>
             </div>
           </CardContent>
         </Card>
@@ -410,7 +420,7 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
               <div className="flex items-center justify-between">
                 <CardTitle>Recent Enrollments</CardTitle>
                 <Link href={`/instructor/courses/${courseId}/students`} className="text-sm text-[#1B8A44] hover:underline">
-                  View All Students
+                  View All Students ({enrollments.length})
                 </Link>
               </div>
             </CardHeader>
@@ -426,8 +436,8 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {enrollments.slice(0, 5).map((enrollment, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-lg">
+                  {enrollments.slice(0, 5).map((enrollment) => (
+                    <div key={enrollment.id} className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className="size-10 bg-[#1B8A44]/10 rounded-full flex items-center justify-center">
                           <Users className="size-5 text-[#1B8A44]" />
@@ -521,13 +531,6 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
                   'bg-[#F1F5F9] text-[#64748B]'
                 }`}>
                   {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-[#1E293B]">Price</span>
-                <span className="text-sm text-[#64748B]">
-                  {course.price === 0 ? 'Free' : `₹${course.price.toLocaleString()}`}
                 </span>
               </div>
               

@@ -125,7 +125,7 @@ export default function Home() {
               Elevate Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-secondary-500 to-primary-600 bg-size-200 animate-gradient">Learning Journey</span> Today.
             </h1>
             <p className="text-lg md:text-xl text-dark-600 leading-relaxed max-w-xl">
-              Join PlayFit LMS to access world-class educational materials, expert instructors, and a community dedicated to helping you achieve your goals.
+              Join PlayFit to access world-class educational materials, expert instructors, and a community dedicated to helping you achieve your goals.
             </p>
             <div className="flex flex-wrap gap-4 mt-4">
               <a href="#trial" className="group bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center gap-2">
@@ -247,7 +247,7 @@ export default function Home() {
                 Student Success Stories
               </div>
               <h2 className="text-4xl md:text-5xl font-bold text-dark-900 mb-4">What Our Students Say</h2>
-              <p className="text-dark-600 max-w-2xl mx-auto text-lg">Join thousands of satisfied students who have transformed their learning experience with PlayFit LMS.</p>
+              <p className="text-dark-600 max-w-2xl mx-auto text-lg">Join thousands of satisfied students who have transformed their learning experience with PlayFit.</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8">
@@ -255,7 +255,7 @@ export default function Home() {
                 {
                   name: "Sarah Johnson",
                   role: "High School Student",
-                  content: "PlayFit LMS has completely changed how I study. The interactive materials and live instructor sessions have helped me improve my grades significantly.",
+                  content: "PlayFit has completely changed how I study. The interactive materials and live instructor sessions have helped me improve my grades significantly.",
                   rating: 5,
                   avatar: "SJ"
                 },
@@ -269,7 +269,7 @@ export default function Home() {
                 {
                   name: "Emily Rodriguez",
                   role: "Professional Learner",
-                  content: "I've tried many online learning platforms, but PlayFit LMS stands out. The quality of content and the community support is unparalleled.",
+                  content: "I've tried many online learning platforms, but PlayFit stands out. The quality of content and the community support is unparalleled.",
                   rating: 5,
                   avatar: "ER"
                 }
@@ -516,7 +516,7 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} PlayFit LMS. All rights reserved. Made with ❤️ for learners worldwide.</p>
+          <p>&copy; {new Date().getFullYear()} PlayFit. All rights reserved. Made with ❤️ for learners worldwide.</p>
         </div>
       </footer>
     </div>

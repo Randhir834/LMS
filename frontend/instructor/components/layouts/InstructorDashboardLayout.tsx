@@ -90,7 +90,7 @@ export default function InstructorDashboardLayout({ children }: InstructorDashbo
           <div className="relative flex items-center justify-center shrink-0 transition-all duration-300 w-full h-12 sm:h-14 md:h-16 lg:h-20">
             <img
               src="/images/navbarlogo.png"
-              alt="PlayFit LMS"
+              alt="PlayFit"
               className="w-full h-full object-contain max-w-full max-h-full"
             />
           </div>

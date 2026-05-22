@@ -137,7 +137,7 @@ function AdminLiveClassManagementContent() {
             placeholder="Search by class title, course, or instructor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8A44] text-sm"
+            className="w-full pl-10 pr-4 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 text-sm"
           />
         </div>
 

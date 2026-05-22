@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import socketService from '@/services/socketService';
+import { socketService } from '@/services/socketService';
 
 interface UseRealTimeUpdatesProps {
   userId?: number;
@@ -31,12 +31,7 @@ export const useRealTimeUpdates = ({
 
   useEffect(() => {
     // Connect to socket
-    socketService.connect();
-
-    // Join appropriate rooms
-    if (userId) {
-      socketService.joinUserRoom(userId);
-    }
+    socketService.connect(userId);
     
     if (isAdmin) {
       socketService.joinAdminRoom();

@@ -16,7 +16,6 @@ const menuItems = [
   { icon: Compass, label: 'Browse Courses', href: '/student/courses' },
   { icon: BookOpen, label: 'My Courses', href: '/student/my-courses' },
   { icon: Video, label: 'Live Classes', href: '/student/live-classes' },
-  { icon: BookOpen, label: 'Study Materials', href: '/student/learn' },
   { icon: ClipboardList, label: 'Assignments', href: '/student/assignments' },
   { icon: FileQuestion, label: 'Quizzes', href: '/student/quizzes' },
   { icon: BarChart3, label: 'My Progress', href: '/student/progress' },
@@ -91,7 +90,7 @@ export default function StudentDashboardLayout({ children }: StudentDashboardLay
           <div className="relative flex items-center justify-center shrink-0 transition-all duration-300 w-full h-12 sm:h-14 md:h-16 lg:h-20">
             <img
               src="/images/navbarlogo.png"
-              alt="PlayFit LMS"
+              alt="PlayFit"
               className="w-full h-full object-contain max-w-full max-h-full"
             />
           </div>

@@ -49,7 +49,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
   const [results, setResults] = useState<SearchResponse | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -204,8 +204,6 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <span className={`text-xs px-2 py-0.5 rounded-full ${
                 item.status === 'published' || item.status === 'active' || item.status === 'completed'
                   ? 'bg-[#D1FAE5] text-[#065F46]'
-                  : item.status === 'draft'
-                  ? 'bg-[#FEF3C7] text-[#92400E]'
                   : 'bg-[#E5E7EB] text-[#374151]'
               }`}>
                 {item.status}

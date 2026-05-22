@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { BookOpen, Users, Loader2, PlusCircle, BarChart3, Calendar, FileText } from 'lucide-react';
@@ -10,10 +10,14 @@ import CourseCard from '@/components/ui/CourseCard';
 import CourseFilters from '@/components/ui/CourseFilters';
 import { courseService } from '@/services/courseService';
 import { categoryService } from '@/services/categoryService';
+import { useAuth } from '@/hooks/useAuth';
+import { useSocket } from '@/hooks/useSocket';
 import type { Course, Category } from '@/types';
 
 function InstructorCoursesContent() {
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const { onCourseAssigned, offCourseAssigned, onCourseUpdated, offCourseUpdated, onCourseDeleted, offCourseDeleted } = useSocket(user?.id);
   const [courses, setCourses] = useState<Course[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +30,7 @@ function InstructorCoursesContent() {
     sort_order: (searchParams?.get('sort_order') as 'asc' | 'desc') || 'desc'
   });
 
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
       const cleanFilters = Object.fromEntries(
@@ -40,7 +44,7 @@ function InstructorCoursesContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const fetchCategories = async () => {
     try {
@@ -57,7 +61,29 @@ function InstructorCoursesContent() {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+
+    // Set up real-time listeners
+    onCourseAssigned((data) => {
+      console.log('[Real-time] New course assigned:', data);
+      fetchCourses(); // Refresh the course list
+    });
+
+    onCourseUpdated((data) => {
+      console.log('[Real-time] Course updated:', data);
+      fetchCourses(); // Refresh the course list
+    });
+
+    onCourseDeleted((data) => {
+      console.log('[Real-time] Course deleted:', data);
+      setCourses(prev => prev.filter(c => c.id !== data.courseId));
+    });
+
+    return () => {
+      offCourseAssigned();
+      offCourseUpdated();
+      offCourseDeleted();
+    };
+  }, [fetchCourses]);
 
   const handleEdit = (id: number) => {
     window.location.href = `/instructor/courses/${id}/edit`;
@@ -91,27 +117,6 @@ function InstructorCoursesContent() {
           <p className="text-sm text-[#64748B] mt-1">
             Manage your courses and track student progress
           </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Link href="/instructor/analytics">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <BarChart3 className="size-4" />
-              Analytics
-            </Button>
-          </Link>
-          <Link href="/instructor/live-classes">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Calendar className="size-4" />
-              Live Classes
-            </Button>
-          </Link>
-          <Link href="/instructor/assignments">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <FileText className="size-4" />
-              Assignments
-            </Button>
-          </Link>
         </div>
       </div>
 
@@ -151,19 +156,6 @@ function InstructorCoursesContent() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <CourseFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            userRole="instructor"
-            categories={categories}
-            showAdvanced={false}
-          />
-        </CardContent>
-      </Card>
-
       {/* Course Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -198,59 +190,6 @@ function InstructorCoursesContent() {
         </div>
       )}
 
-      {/* Quick Actions */}
-      {courses.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/instructor/assignments">
-                <div className="p-4 border border-[#E2E8F0] rounded-lg hover:border-[#1B8A44] transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#1B8A44]/10 rounded-lg">
-                      <FileText className="size-5 text-[#1B8A44]" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-[#1E293B]">Manage Assignments</h4>
-                      <p className="text-sm text-[#64748B]">Create and grade assignments</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/instructor/live-classes">
-                <div className="p-4 border border-[#E2E8F0] rounded-lg hover:border-[#1B8A44] transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#1B8A44]/10 rounded-lg">
-                      <Calendar className="size-5 text-[#1B8A44]" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-[#1E293B]">Schedule Live Classes</h4>
-                      <p className="text-sm text-[#64748B]">Host interactive sessions</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/instructor/analytics">
-                <div className="p-4 border border-[#E2E8F0] rounded-lg hover:border-[#1B8A44] transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#1B8A44]/10 rounded-lg">
-                      <BarChart3 className="size-5 text-[#1B8A44]" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-[#1E293B]">View Analytics</h4>
-                      <p className="text-sm text-[#64748B]">Track student progress</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

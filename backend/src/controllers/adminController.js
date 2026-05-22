@@ -4,6 +4,15 @@ const {
   createInstructor
 } = require('../services/adminService');
 
+const {
+  broadcastUserUpdate,
+  broadcastUserDelete,
+  broadcastUserRoleChange,
+  broadcastAnalyticsUpdate
+} = require('../services/adminSyncService');
+
+const userDeletionService = require('../services/userDeletionService');
+
 const getUsers = async (req, res, next) => {
   try {
     const users = await findAllUsers(req.query.role);
@@ -22,6 +31,10 @@ const getUserById = async (req, res, next) => {
 const updateUserRoleController = async (req, res, next) => {
   try {
     const user = await updateUserRole(req.params.id, req.body.role);
+    
+    // Broadcast role change to all admins
+    broadcastUserRoleChange(user.id, user.role, user.name);
+    
     res.json({ message: 'User role updated', user });
   } catch (error) { next(error); }
 };
@@ -40,26 +53,8 @@ const updateUserController = async (req, res, next) => {
     
     console.log('Updated user:', user);
     
-    // Emit real-time update to the specific user
-    if (global.io) {
-      // Send update to the specific user's room
-      global.io.to(`user-${userId}`).emit('profile-updated', {
-        type: 'PROFILE_UPDATED',
-        user: user,
-        message: 'Your profile has been updated by an administrator',
-        timestamp: new Date().toISOString()
-      });
-
-      // Send update to admin room for admin dashboard updates
-      global.io.to('admin-room').emit('user-updated', {
-        type: 'USER_UPDATED',
-        user: user,
-        updatedBy: 'admin', // You can get this from req.user if you have auth
-        timestamp: new Date().toISOString()
-      });
-
-      console.log(`[socket] Emitted profile update for user ${userId}`);
-    }
+    // Broadcast user update to all admins
+    broadcastUserUpdate(user.id, user);
     
     res.json({ message: 'User updated successfully', user });
   } catch (error) {
@@ -78,9 +73,132 @@ const updateUserController = async (req, res, next) => {
 
 const deleteUser = async (req, res, next) => {
   try {
-    await deleteUserById(req.params.id);
-    res.json({ message: 'User deleted' });
-  } catch (error) { next(error); }
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    const { force = false, dryRun = false } = req.query;
+
+    // Use the new user deletion service
+    const result = await userDeletionService.deleteUser(userId, {
+      force: force === 'true',
+      dryRun: dryRun === 'true'
+    });
+
+    if (!result.success) {
+      if (result.requiresConfirmation) {
+        return res.status(200).json({
+          success: false,
+          requiresConfirmation: true,
+          message: result.message,
+          user: result.user,
+          impact: result.impact,
+          totalAffectedRecords: result.totalAffectedRecords
+        });
+      }
+      return res.status(400).json({ error: result.message });
+    }
+
+    // If it's a dry run, return the impact analysis
+    if (result.dryRun) {
+      return res.json({
+        success: true,
+        dryRun: true,
+        message: result.message,
+        user: result.user,
+        impact: result.impact
+      });
+    }
+
+    // Broadcast user deletion to all admins
+    broadcastUserDelete(result.user.id, result.user.name);
+    
+    res.json({
+      success: true,
+      message: result.message,
+      user: result.user,
+      impact: result.impact
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    next(error);
+  }
+};
+
+// New endpoint to get user deletion impact
+const getUserDeletionImpact = async (req, res, next) => {
+  try {
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    const userInfo = await userDeletionService.getUserInfo(userId);
+    if (!userInfo) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const impact = await userDeletionService.getUserDeletionImpact(userId);
+    
+    res.json({
+      user: userInfo,
+      impact: impact,
+      totalAffectedRecords: impact.reduce((sum, item) => sum + parseInt(item.record_count), 0)
+    });
+  } catch (error) {
+    console.error('Get user deletion impact error:', error);
+    next(error);
+  }
+};
+
+// New endpoint to archive user instead of deleting
+const archiveUser = async (req, res, next) => {
+  try {
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    const result = await userDeletionService.archiveUser(userId);
+    
+    res.json({
+      success: true,
+      message: result.message,
+      user: result.user
+    });
+  } catch (error) {
+    console.error('Archive user error:', error);
+    next(error);
+  }
+};
+
+// New endpoint to delete multiple users
+const deleteMultipleUsers = async (req, res, next) => {
+  try {
+    const { userIds, force = false } = req.body;
+    
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ error: 'userIds must be a non-empty array' });
+    }
+
+    // Validate all user IDs are numbers
+    const validUserIds = userIds.filter(id => !isNaN(parseInt(id))).map(id => parseInt(id));
+    if (validUserIds.length !== userIds.length) {
+      return res.status(400).json({ error: 'All user IDs must be valid numbers' });
+    }
+
+    const result = await userDeletionService.deleteMultipleUsers(validUserIds, { force });
+    
+    res.json({
+      success: true,
+      message: `Batch deletion completed: ${result.successCount} successful, ${result.failureCount} failed`,
+      results: result
+    });
+  } catch (error) {
+    console.error('Delete multiple users error:', error);
+    next(error);
+  }
 };
 
 const getAnalytics = async (req, res, next) => {
@@ -89,7 +207,13 @@ const getAnalytics = async (req, res, next) => {
     const enrollmentTrend = await getEnrollmentTrend(30);
     const recentEnrollments = await getRecentEnrollments(5);
     const recentPayments = await getRecentPayments(5);
-    res.json({ stats, enrollmentTrend, recentEnrollments, recentPayments });
+    
+    const analyticsData = { stats, enrollmentTrend, recentEnrollments, recentPayments };
+    
+    // Broadcast analytics update to all admins
+    broadcastAnalyticsUpdate(analyticsData);
+    
+    res.json(analyticsData);
   } catch (error) { next(error); }
 };
 
@@ -129,4 +253,15 @@ const createInstructorAccount = async (req, res, next) => {
   }
 };
 
-module.exports = { getUsers, getUserById, updateUserRoleController, updateUserController, deleteUser, getAnalytics, createInstructorAccount };
+module.exports = { 
+  getUsers, 
+  getUserById, 
+  updateUserRoleController, 
+  updateUserController, 
+  deleteUser, 
+  getUserDeletionImpact,
+  archiveUser,
+  deleteMultipleUsers,
+  getAnalytics, 
+  createInstructorAccount 
+};

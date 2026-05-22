@@ -125,7 +125,7 @@ export default function CourseFilters({
           <select
             value={localFilters.status || ''}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="px-2 sm:px-3 py-2 border border-[#E2E8F0] rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent min-w-0"
+            className="px-2 sm:px-3 py-2 border border-[#E2E8F0] rounded-lg text-xs sm:text-sm focus:outline-none min-w-0"
           >
             {statusOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -138,7 +138,7 @@ export default function CourseFilters({
           <select
             value={localFilters.level || ''}
             onChange={(e) => handleFilterChange('level', e.target.value)}
-            className="px-2 sm:px-3 py-2 border border-[#E2E8F0] rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent min-w-0"
+            className="px-2 sm:px-3 py-2 border border-[#E2E8F0] rounded-lg text-xs sm:text-sm focus:outline-none min-w-0"
           >
             {levelOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -151,7 +151,7 @@ export default function CourseFilters({
           <select
             value={localFilters.sort_by || 'created_at'}
             onChange={(e) => handleFilterChange('sort_by', e.target.value)}
-            className="hidden sm:block px-2 sm:px-3 py-2 border border-[#E2E8F0] rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent min-w-0"
+            className="hidden sm:block px-2 sm:px-3 py-2 border border-[#E2E8F0] rounded-lg text-xs sm:text-sm focus:outline-none min-w-0"
           >
             {sortOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -200,7 +200,7 @@ export default function CourseFilters({
             <select
               value={localFilters.sort_by || 'created_at'}
               onChange={(e) => handleFilterChange('sort_by', e.target.value)}
-              className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
+              className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none "
             >
               {sortOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -220,7 +220,7 @@ export default function CourseFilters({
                 <select
                   value={localFilters.category_id || ''}
                   onChange={(e) => handleFilterChange('category_id', e.target.value)}
-                  className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none "
                 >
                   <option value="">All Categories</option>
                   {categories.map(category => (
@@ -240,7 +240,7 @@ export default function CourseFilters({
               <select
                 value={localFilters.price_range || ''}
                 onChange={(e) => handleFilterChange('price_range', e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
+                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none "
               >
                 {priceOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -259,7 +259,7 @@ export default function CourseFilters({
                 <select
                   value={localFilters.instructor_id || ''}
                   onChange={(e) => handleFilterChange('instructor_id', e.target.value)}
-                  className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none "
                 >
                   <option value="">All Instructors</option>
                   {instructors.map(instructor => (
@@ -279,7 +279,7 @@ export default function CourseFilters({
               <select
                 value={localFilters.sort_order || 'desc'}
                 onChange={(e) => handleFilterChange('sort_order', e.target.value as 'asc' | 'desc')}
-                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
+                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none "
               >
                 <option value="desc">Descending</option>
                 <option value="asc">Ascending</option>

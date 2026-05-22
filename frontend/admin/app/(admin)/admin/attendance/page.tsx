@@ -178,7 +178,7 @@ export default function AdminAttendancePage() {
               <select
                 value={filters.course_id}
                 onChange={(e) => handleFilterChange('course_id', e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
+                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none "
               >
                 <option value="">All Courses</option>
                 {courses.map(course => (
@@ -196,7 +196,7 @@ export default function AdminAttendancePage() {
               <select
                 value={filters.instructor_id}
                 onChange={(e) => handleFilterChange('instructor_id', e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
+                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none "
               >
                 <option value="">All Instructors</option>
                 {instructors.map(instructor => (

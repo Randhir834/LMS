@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import { courseService } from '@/services/courseService';
 import { enrollmentService } from '@/services/enrollmentService';
 import { paymentService } from '@/services/paymentService';
+import CourseLiveClasses from '@/components/CourseLiveClasses';
 import type { Course } from '@/types';
 
 export default function CourseDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -275,6 +276,9 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
               </div>
             </CardContent>
           </Card>
+
+          {/* Live Classes */}
+          {enrolled && <CourseLiveClasses courseId={courseId} />}
         </div>
 
         {/* Sidebar */}
@@ -332,7 +336,7 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
                           <select
                             value={paymentMethod}
                             onChange={(e) => setPaymentMethod(e.target.value)}
-                            className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8A44]"
+                            className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2"
                           >
                             <option value="credit_card">Credit Card</option>
                             <option value="debit_card">Debit Card</option>

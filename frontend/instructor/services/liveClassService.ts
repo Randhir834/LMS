@@ -25,4 +25,9 @@ export const liveClassService = {
     const response = await api.delete(`/live-classes/${id}`);
     return response.data;
   },
+
+  getCoursesWithLiveClasses: async () => {
+    const response = await api.get('/live-classes/courses-with-classes');
+    return response.data;
+  },
 };

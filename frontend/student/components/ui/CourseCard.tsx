@@ -60,33 +60,20 @@ export default function CourseCard({
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 border-[#E2E8F0] hover:border-[#1B8A44]/20 h-full flex flex-col">
-      <div className="relative">
-        {course.thumbnail_url ? (
-          <img
-            src={course.thumbnail_url}
-            alt={course.title}
-            className="w-full h-40 sm:h-44 md:h-48 object-cover rounded-t-lg"
-          />
-        ) : (
-          <div className="w-full h-40 sm:h-44 md:h-48 bg-gradient-to-br from-[#1B8A44]/10 to-[#1B8A44]/20 rounded-t-lg flex items-center justify-center">
-            <BookOpen className="size-8 sm:size-10 md:size-12 text-[#1B8A44]/60" />
-          </div>
-        )}
-        
-        {/* Status Badge */}
-        <div className="absolute top-2 sm:top-3 left-2 sm:left-3">
-          <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${statusColors[course.status]}`}>
-            {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
-          </span>
-        </div>
-
-        {/* Price Badge */}
-        <div className="absolute top-2 sm:top-3 right-2 sm:right-3">
-          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-bold bg-white/90 text-[#1E293B] rounded-full shadow-sm">
-            {formatPrice(course.price)}
-          </span>
-        </div>
+    <Link href={getViewLink()}>
+      <Card className="group hover:shadow-lg transition-all duration-200 border-[#E2E8F0] hover:border-[#1B8A44]/20 h-full flex flex-col cursor-pointer">
+        <div className="relative">
+          {course.thumbnail_url ? (
+            <img
+              src={course.thumbnail_url}
+              alt={course.title}
+              className="w-full h-40 sm:h-44 md:h-48 object-cover rounded-t-lg"
+            />
+          ) : (
+            <div className="w-full h-40 sm:h-44 md:h-48 bg-gradient-to-br from-[#1B8A44]/10 to-[#1B8A44]/20 rounded-t-lg flex items-center justify-center">
+              <BookOpen className="size-8 sm:size-10 md:size-12 text-[#1B8A44]/60" />
+            </div>
+          )}
 
         {/* Progress Bar for Students */}
         {userRole === 'student' && course.is_enrolled && course.progress !== undefined && (
@@ -105,9 +92,9 @@ export default function CourseCard({
       </div>
 
       <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
-        <div className="space-y-2 sm:space-y-3 flex-1">
+        <div className="space-y-1 sm:space-y-2 flex-1">
           {/* Title and Level */}
-          <div className="space-y-1 sm:space-y-2">
+          <div className="space-y-1">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-sm sm:text-base text-[#1E293B] line-clamp-2 group-hover:text-[#1B8A44] transition-colors leading-tight">
                 {course.title}
@@ -130,36 +117,6 @@ export default function CourseCard({
             <span className="truncate">{instructorNames}</span>
           </div>
 
-          {/* Course Stats */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs sm:text-sm text-[#64748B]">
-            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-              <div className="flex items-center gap-1">
-                <Clock className="size-3 sm:size-4" />
-                <span className="whitespace-nowrap">{formatDuration(course.duration_value, course.duration_unit)}</span>
-              </div>
-              
-              {course.enrollment_count !== undefined && (
-                <div className="flex items-center gap-1">
-                  <Users className="size-3 sm:size-4" />
-                  <span>{course.enrollment_count}</span>
-                </div>
-              )}
-
-              {course.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="size-3 sm:size-4 fill-yellow-400 text-yellow-400" />
-                  <span>{course.rating.toFixed(1)}</span>
-                </div>
-              )}
-            </div>
-
-            {course.category_name && (
-              <span className="text-xs bg-[#F1F5F9] text-[#64748B] px-2 py-1 rounded self-start sm:self-auto">
-                {course.category_name}
-              </span>
-            )}
-          </div>
-
           {/* Enrollment Status for Students */}
           {userRole === 'student' && course.is_enrolled && (
             <div className="flex items-center gap-2 text-xs sm:text-sm text-[#1B8A44] bg-[#DCFCE7] px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg">
@@ -170,37 +127,8 @@ export default function CourseCard({
         </div>
 
         {/* Actions */}
-        {showActions && (
+        {showActions && (userRole === 'admin' || (userRole === 'instructor' && getEditLink())) && (
           <div className="flex items-center gap-2 pt-2 sm:pt-3 border-t border-[#E2E8F0] mt-auto">
-            <Link href={getViewLink()} className="flex-1">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm py-2 sm:py-2.5"
-              >
-                {userRole === 'student' ? (
-                  course.is_enrolled ? (
-                    <>
-                      <Play className="size-3 sm:size-4" />
-                      <span className="hidden xs:inline">Continue</span>
-                      <span className="xs:hidden">Play</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="size-3 sm:size-4" />
-                      <span className="hidden xs:inline">View Details</span>
-                      <span className="xs:hidden">View</span>
-                    </>
-                  )
-                ) : (
-                  <>
-                    <Eye className="size-3 sm:size-4" />
-                    View
-                  </>
-                )}
-              </Button>
-            </Link>
-
             {(userRole === 'admin' || (userRole === 'instructor' && getEditLink())) && onEdit && (
               <Button
                 variant="ghost"
@@ -227,5 +155,6 @@ export default function CourseCard({
         )}
       </CardContent>
     </Card>
+    </Link>
   );
 }

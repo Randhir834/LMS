@@ -206,6 +206,7 @@ export interface LiveClass {
   duration_minutes: number;
   status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   course_title?: string;
+  instructor_name?: string;
   created_at: string;
   updated_at: string;
 }

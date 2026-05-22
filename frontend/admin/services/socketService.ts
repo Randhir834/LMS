@@ -9,7 +9,7 @@ class SocketService {
       return this.socket;
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
     
     this.socket = io(backendUrl, {
       withCredentials: true,
@@ -67,6 +67,44 @@ class SocketService {
         this.socket.off('course-material-uploaded', callback);
       } else {
         this.socket.off('course-material-uploaded');
+      }
+    }
+  }
+
+  joinAdminRoom() {
+    if (this.socket) {
+      this.socket.emit('join-admin-room');
+    }
+  }
+
+  onProfileUpdate(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('profile-update', callback);
+    }
+  }
+
+  offProfileUpdate(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('profile-update', callback);
+      } else {
+        this.socket.off('profile-update');
+      }
+    }
+  }
+
+  onUserUpdate(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('user-update', callback);
+    }
+  }
+
+  offUserUpdate(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('user-update', callback);
+      } else {
+        this.socket.off('user-update');
       }
     }
   }

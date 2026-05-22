@@ -9,7 +9,7 @@ class SocketService {
       return this.socket;
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
     
     this.socket = io(backendUrl, {
       withCredentials: true,
@@ -72,6 +72,54 @@ class SocketService {
   joinAdminRoom() {
     if (this.socket) {
       this.socket.emit('join-admin-room');
+    }
+  }
+
+  onCourseAssigned(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('course-assigned', callback);
+    }
+  }
+
+  offCourseAssigned(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('course-assigned', callback);
+      } else {
+        this.socket.off('course-assigned');
+      }
+    }
+  }
+
+  onCourseUpdated(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('course-updated', callback);
+    }
+  }
+
+  offCourseUpdated(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('course-updated', callback);
+      } else {
+        this.socket.off('course-updated');
+      }
+    }
+  }
+
+  onCourseDeleted(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('course-deleted', callback);
+    }
+  }
+
+  offCourseDeleted(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('course-deleted', callback);
+      } else {
+        this.socket.off('course-deleted');
+      }
     }
   }
 

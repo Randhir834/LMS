@@ -1,20 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Users, Loader2, Download, Award, PlusCircle } from 'lucide-react';
 import UserCard from '@/components/UserCard';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import CreateInstructorModal from '@/components/CreateInstructorModal';
 import { adminService } from '@/services/adminService';
 import type { User } from '@/types';
 
 export default function AdminInstructorsPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [specializationFilter, setSpecializationFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchInstructors = async () => {
@@ -33,15 +33,8 @@ export default function AdminInstructorsPage() {
     fetchInstructors();
   }, []);
 
-  const handleInstructorCreated = async () => {
-    // Refresh the instructors list
-    try {
-      const data = await adminService.getUsers('instructor');
-      setUsers(data.users);
-    } catch (error) {
-      console.error('Failed to refresh instructors:', error);
-    }
-    setIsCreateModalOpen(false);
+  const handleCreateInstructor = () => {
+    router.push('/admin/create-instructor');
   };
 
   const filteredUsers = users.filter((user) => {
@@ -137,7 +130,7 @@ export default function AdminInstructorsPage() {
 
             <Button 
               className="flex items-center gap-2 whitespace-nowrap"
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleCreateInstructor}
             >
               <PlusCircle size={16} />
               Create Instructor
@@ -200,12 +193,7 @@ export default function AdminInstructorsPage() {
         </div>
       )}
 
-      {/* Create Instructor Modal */}
-      <CreateInstructorModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onInstructorCreated={handleInstructorCreated}
-      />
+
     </div>
   );
 }
