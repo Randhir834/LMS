@@ -1,5 +1,0 @@
-$kind: collection
-name: Forgot Password
-variables:
-  - key: baseUrl
-    value: 'http://localhost:5001'

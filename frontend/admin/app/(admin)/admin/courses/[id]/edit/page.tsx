@@ -2,12 +2,13 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Check, Upload, Plus, Minus, FileText, Image, Presentation, Trash2, Shield, ExternalLink, Download } from 'lucide-react';
+import { Loader2, Check, Upload, Plus, Minus, FileText, Image, Presentation, Trash2, Shield, ExternalLink, Download, AlertCircle } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { courseService } from '@/services/courseService';
 import { courseMaterialService, type CourseMaterial } from '@/services/courseMaterialService';
+import { imageUploadService } from '@/services/imageUploadService';
 import api from '@/services/api';
 import type { Course, CourseInstructor } from '@/types';
 
@@ -38,19 +39,24 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
   const [newMaterials, setNewMaterials] = useState<NewCourseMaterial[]>([]);
   const [materialsLoading, setMaterialsLoading] = useState(false);
   const [uploadingMaterials, setUploadingMaterials] = useState(false);
+  const [courseImage, setCourseImage] = useState<File | null>(null);
+  const [courseImagePreview, setCourseImagePreview] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string>('');
 
   const [form, setForm] = useState({
     title: '',
     description: '',
     price: '',
     category_id: '',
-    status: 'draft' as 'draft' | 'published' | 'archived',
+    status: 'published' as 'published' | 'archived',
     duration_value: '',
     duration_unit: 'days' as 'days' | 'weeks' | 'months',
     level: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
     language: 'English',
     what_you_learn: '',
     requirements: '',
+    thumbnail_url: '',
   });
 
   useEffect(() => {
@@ -69,14 +75,20 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
           description: c.description || '',
           price: c.price?.toString() || '',
           category_id: c.category_id?.toString() || '',
-          status: c.status || 'draft',
+          status: c.status || 'published',
           duration_value: c.duration_value?.toString() || '',
           duration_unit: c.duration_unit || 'days',
           level: c.level || 'beginner',
           language: c.language || 'English',
           what_you_learn: c.what_you_learn || '',
           requirements: c.requirements || '',
+          thumbnail_url: c.thumbnail_url || '',
         });
+
+        // Set image preview if exists
+        if (c.thumbnail_url) {
+          setCourseImagePreview(c.thumbnail_url);
+        }
 
         // Fetch existing course materials
         try {
@@ -107,6 +119,53 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
     setSelectedInstructors((prev) =>
       prev.includes(instId) ? prev.filter((i) => i !== instId) : [...prev, instId]
     );
+  };
+
+  // Course Image Upload Functions
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageError('');
+    const validation = imageUploadService.validateImage(file);
+    
+    if (!validation.valid) {
+      setImageError(validation.error || 'Invalid image');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setCourseImagePreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    setCourseImage(file);
+    e.target.value = '';
+  };
+
+  const uploadCourseImage = async (): Promise<string | null> => {
+    if (!courseImage) return null;
+
+    try {
+      setUploadingImage(true);
+      const result = await imageUploadService.uploadImage(courseImage, 'course-thumbnails');
+      return result.publicUrl;
+    } catch (error: any) {
+      const message = error?.response?.data?.error || 'Failed to upload image';
+      setImageError(message);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const removeCourseImage = () => {
+    setCourseImage(null);
+    setCourseImagePreview('');
+    setImageError('');
+    setForm(prev => ({ ...prev, thumbnail_url: '' }));
   };
 
   // Course Materials Functions
@@ -246,6 +305,19 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
     try {
       setSaving(true);
       
+      let thumbnailUrl = form.thumbnail_url;
+
+      // Step 0: Upload course image if provided
+      if (courseImage) {
+        const uploadedUrl = await uploadCourseImage();
+        if (uploadedUrl) {
+          thumbnailUrl = uploadedUrl;
+        } else {
+          alert('Failed to upload course image. Please try again.');
+          return;
+        }
+      }
+      
       // Step 1: Update course information
       await courseService.updateCourse(courseId, {
         title: form.title,
@@ -259,6 +331,7 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
         language: form.language,
         what_you_learn: form.what_you_learn || undefined,
         requirements: form.requirements || undefined,
+        thumbnail_url: thumbnailUrl || undefined,
         instructor_ids: selectedInstructors,
       });
 
@@ -308,13 +381,82 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
                 <textarea id="description" name="description" rows={4} value={form.description} onChange={handleChange}
                   className="w-full px-3 py-2 rounded-lg border border-border text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-primary-500" />
               </div>
+
+              {/* Course Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">
+                  Course Thumbnail Image
+                </label>
+                
+                {imageError && (
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-700">{imageError}</p>
+                  </div>
+                )}
+
+                {!courseImagePreview ? (
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary-500 transition-colors">
+                    <input
+                      type="file"
+                      id="course-image"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                      disabled={uploadingImage}
+                    />
+                    <label htmlFor="course-image" className="cursor-pointer">
+                      <Image className="h-12 w-12 text-text-muted mx-auto mb-2" />
+                      <h3 className="text-sm font-medium text-text-primary mb-1">
+                        Upload Course Image
+                      </h3>
+                      <p className="text-xs text-text-muted mb-3">
+                        Click to browse or drag and drop
+                      </p>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="border border-border rounded-lg p-4 space-y-3">
+                    <div className="relative">
+                      <img
+                        src={courseImagePreview}
+                        alt="Course thumbnail preview"
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={removeCourseImage}
+                        className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {courseImage && (
+                      <div className="text-sm text-text-muted">
+                        <p><strong>File:</strong> {courseImage.name}</p>
+                        <p><strong>Size:</strong> {imageUploadService.formatFileSize(courseImage.size)}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-2 text-xs text-text-muted bg-hover p-3 rounded-lg">
+                  <strong>Requirements:</strong>
+                  <ul className="list-disc list-inside mt-1 space-y-1">
+                    <li>Supported formats: JPEG, PNG, WebP, GIF</li>
+                    <li>Maximum file size: 5MB</li>
+                    <li>Recommended dimensions: 1200x675px (16:9 aspect ratio)</li>
+                  </ul>
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Price (₹)" id="price" name="price" type="number" min="0" value={form.price} onChange={handleChange} />
                 <div className="space-y-1">
                   <label htmlFor="status" className="block text-sm font-medium text-text-primary">Status</label>
                   <select id="status" name="status" value={form.status} onChange={handleChange}
                     className="w-full px-3 py-2 rounded-lg border border-border text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="draft">Draft</option>
                     <option value="published">Published</option>
                     <option value="archived">Archived</option>
                   </select>
@@ -475,9 +617,6 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
                   <p className="text-xs text-text-muted mb-3">
                     Drag and drop files here, or click to browse
                   </p>
-                  <Button type="button" variant="outline" size="sm">
-                    Select Files
-                  </Button>
                 </label>
               </div>
 
@@ -591,11 +730,11 @@ export default function AdminEditCoursePage({ params }: { params: Promise<{ id: 
         </Card>
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={saving || uploadingMaterials} className="gap-2">
-            {saving || uploadingMaterials ? (
+          <Button type="submit" disabled={saving || uploadingMaterials || uploadingImage} className="gap-2">
+            {saving || uploadingMaterials || uploadingImage ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                {uploadingMaterials ? 'Uploading Materials...' : 'Saving Changes...'}
+                {uploadingImage ? 'Uploading Image...' : uploadingMaterials ? 'Uploading Materials...' : 'Saving Changes...'}
               </>
             ) : (
               <>

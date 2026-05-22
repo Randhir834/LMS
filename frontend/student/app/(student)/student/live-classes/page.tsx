@@ -3,8 +3,10 @@
 import { useEffect, useState, Suspense } from 'react';
 import { Calendar, Clock, Users, Loader2, ExternalLink, AlertCircle, BookOpen } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 import StudentDashboardLayout from '@/components/layouts/StudentDashboardLayout';
 import { liveClassService } from '@/services/liveClassService';
+import Link from 'next/link';
 import type { LiveClass } from '@/types';
 
 function StudentLiveClassesContent() {
@@ -80,6 +82,13 @@ function StudentLiveClassesContent() {
               Join your scheduled live classes and interact with instructors
             </p>
           </div>
+
+          <Link href="/student/live-classes/courses">
+            <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+              <BookOpen className="size-4" />
+              View by Course
+            </Button>
+          </Link>
         </div>
 
         {/* Error Message */}

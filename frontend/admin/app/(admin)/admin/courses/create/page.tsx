@@ -2,25 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Check, X, Upload, Plus, Minus, FileText, Image, Presentation, Trash2, Shield } from 'lucide-react';
+import { Loader2, Check, X, Upload, Plus, Minus, FileText, Image, Presentation, Trash2, Shield, AlertCircle } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { courseService } from '@/services/courseService';
-import { categoryService } from '@/services/categoryService';
 import { courseMaterialService } from '@/services/courseMaterialService';
+import { imageUploadService } from '@/services/imageUploadService';
 import api from '@/services/api';
 
 interface InstructorOption {
   id: number;
   name: string;
   email: string;
-}
-
-interface Category {
-  id: number;
-  name: string;
-  description?: string;
 }
 
 interface CourseMaterial {
@@ -34,18 +28,19 @@ export default function AdminCreateCoursePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [instructors, setInstructors] = useState<InstructorOption[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedInstructors, setSelectedInstructors] = useState<number[]>([]);
   const [whatYouLearnItems, setWhatYouLearnItems] = useState<string[]>(['']);
   const [requirementItems, setRequirementItems] = useState<string[]>(['']);
   const [courseMaterials, setCourseMaterials] = useState<CourseMaterial[]>([]);
   const [uploadingMaterials, setUploadingMaterials] = useState(false);
+  const [courseImage, setCourseImage] = useState<File | null>(null);
+  const [courseImagePreview, setCourseImagePreview] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string>('');
   const [form, setForm] = useState({
     title: '',
     description: '',
     price: '',
-    category_id: '',
-    status: 'draft' as 'draft' | 'published',
     duration_value: '',
     duration_unit: 'days' as 'days' | 'weeks' | 'months',
     level: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
@@ -56,12 +51,8 @@ export default function AdminCreateCoursePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [instructorsRes, categoriesRes] = await Promise.all([
-          api.get('/admin/users?role=instructor'),
-          categoryService.getCategories()
-        ]);
+        const instructorsRes = await api.get('/admin/users?role=instructor');
         setInstructors(instructorsRes.data.users || []);
-        setCategories(categoriesRes.categories || []);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       }
@@ -110,6 +101,52 @@ export default function AdminCreateCoursePage() {
     const updated = [...requirementItems];
     updated[index] = value;
     setRequirementItems(updated);
+  };
+
+  // Course Image Upload Functions
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageError('');
+    const validation = imageUploadService.validateImage(file);
+    
+    if (!validation.valid) {
+      setImageError(validation.error || 'Invalid image');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setCourseImagePreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    setCourseImage(file);
+    e.target.value = '';
+  };
+
+  const uploadCourseImage = async (): Promise<string | null> => {
+    if (!courseImage) return null;
+
+    try {
+      setUploadingImage(true);
+      const result = await imageUploadService.uploadImage(courseImage, 'course-thumbnails');
+      return result.publicUrl;
+    } catch (error: any) {
+      const message = error?.response?.data?.error || 'Failed to upload image';
+      setImageError(message);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const removeCourseImage = () => {
+    setCourseImage(null);
+    setCourseImagePreview('');
+    setImageError('');
   };
 
   // Course Materials Functions
@@ -203,6 +240,11 @@ export default function AdminCreateCoursePage() {
       return;
     }
 
+    if (!form.description.trim()) {
+      alert('Course description is required');
+      return;
+    }
+
     if (selectedInstructors.length === 0) {
       alert('Please select at least one instructor');
       return;
@@ -211,11 +253,24 @@ export default function AdminCreateCoursePage() {
     try {
       setLoading(true);
       
+      let thumbnailUrl = form.thumbnail_url;
+
+      // Step 0: Upload course image if provided
+      if (courseImage) {
+        const uploadedUrl = await uploadCourseImage();
+        if (uploadedUrl) {
+          thumbnailUrl = uploadedUrl;
+        } else {
+          alert('Failed to upload course image. Please try again.');
+          return;
+        }
+      }
+      
       const courseData = {
         ...form,
+        thumbnail_url: thumbnailUrl,
         price: parseFloat(form.price) || 0,
         duration_value: parseInt(form.duration_value) || 1,
-        category_id: form.category_id ? parseInt(form.category_id) : undefined,
         what_you_learn: whatYouLearnItems.filter(item => item.trim()).join('\n'),
         requirements: requirementItems.filter(item => item.trim()).join('\n'),
         instructor_ids: selectedInstructors,
@@ -250,19 +305,11 @@ export default function AdminCreateCoursePage() {
   return (
     <div className="p-4 md:p-8 max-w-[1000px] mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-[#1E293B]">Create New Course</h1>
-          <p className="text-sm text-[#64748B] mt-1">
-            Add a new course to the platform
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => router.back()}
-        >
-          Cancel
-        </Button>
+      <div>
+        <h1 className="text-xl md:text-2xl font-bold text-[#1E293B]">Create New Course</h1>
+        <p className="text-sm text-[#64748B] mt-1">
+          Add a new course to the platform
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -272,38 +319,17 @@ export default function AdminCreateCoursePage() {
             <CardTitle>Basic Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#374151] mb-2">
-                  Course Title *
-                </label>
-                <Input
-                  name="title"
-                  value={form.title}
-                  onChange={handleChange}
-                  placeholder="Enter course title"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-[#374151] mb-2">
-                  Category
-                </label>
-                <select
-                  name="category_id"
-                  value={form.category_id}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Course Title *
+              </label>
+              <Input
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Enter course title"
+                required
+              />
             </div>
 
             <div>
@@ -320,17 +346,72 @@ export default function AdminCreateCoursePage() {
               />
             </div>
 
+            {/* Course Image Upload */}
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-2">
-                Thumbnail URL
+                Course Thumbnail Image
               </label>
-              <Input
-                name="thumbnail_url"
-                value={form.thumbnail_url}
-                onChange={handleChange}
-                placeholder="https://example.com/image.jpg"
-                type="url"
-              />
+              
+              {imageError && (
+                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">{imageError}</p>
+                </div>
+              )}
+
+              {!courseImagePreview ? (
+                <div className="border-2 border-dashed border-[#E2E8F0] rounded-lg p-6 text-center hover:border-[#1B8A44] transition-colors">
+                  <input
+                    type="file"
+                    id="course-image"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    disabled={uploadingImage}
+                  />
+                  <label htmlFor="course-image" className="cursor-pointer">
+                    <Image className="h-12 w-12 text-[#64748B] mx-auto mb-2" />
+                    <h3 className="text-sm font-medium text-[#1E293B] mb-1">
+                      Upload Course Image
+                    </h3>
+                    <p className="text-xs text-[#64748B] mb-3">
+                      Click to browse or drag and drop
+                    </p>
+                  </label>
+                </div>
+              ) : (
+                <div className="border border-[#E2E8F0] rounded-lg p-4 space-y-3">
+                  <div className="relative">
+                    <img
+                      src={courseImagePreview}
+                      alt="Course thumbnail preview"
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeCourseImage}
+                      className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="text-sm text-[#64748B]">
+                    <p><strong>File:</strong> {courseImage?.name}</p>
+                    <p><strong>Size:</strong> {imageUploadService.formatFileSize(courseImage?.size || 0)}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-2 text-xs text-[#64748B] bg-[#F8FAFC] p-3 rounded-lg">
+                <strong>Requirements:</strong>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Supported formats: JPEG, PNG, WebP, GIF</li>
+                  <li>Maximum file size: 5MB</li>
+                  <li>Recommended dimensions: 1200x675px (16:9 aspect ratio)</li>
+                </ul>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -386,7 +467,7 @@ export default function AdminCreateCoursePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-2">
                   Duration
@@ -414,21 +495,6 @@ export default function AdminCreateCoursePage() {
                   <option value="days">Days</option>
                   <option value="weeks">Weeks</option>
                   <option value="months">Months</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-[#374151] mb-2">
-                  Status
-                </label>
-                <select
-                  name="status"
-                  value={form.status}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
                 </select>
               </div>
             </div>
@@ -580,9 +646,6 @@ export default function AdminCreateCoursePage() {
                 <p className="text-sm text-[#64748B] mb-4">
                   Drag and drop files here, or click to browse
                 </p>
-                <Button type="button" variant="outline">
-                  Select Files
-                </Button>
               </label>
             </div>
 
@@ -665,19 +728,19 @@ export default function AdminCreateCoursePage() {
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            disabled={loading || uploadingMaterials}
+            disabled={loading || uploadingMaterials || uploadingImage}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            disabled={loading || uploadingMaterials}
+            disabled={loading || uploadingMaterials || uploadingImage}
             className="flex items-center gap-2"
           >
-            {loading || uploadingMaterials ? (
+            {loading || uploadingMaterials || uploadingImage ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                {uploadingMaterials ? 'Uploading Materials...' : 'Creating Course...'}
+                {uploadingImage ? 'Uploading Image...' : uploadingMaterials ? 'Uploading Materials...' : 'Creating Course...'}
               </>
             ) : (
               <>

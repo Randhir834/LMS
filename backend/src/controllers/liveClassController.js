@@ -6,7 +6,10 @@ const {
   createLiveClass,
   updateLiveClassById,
   deleteLiveClassById,
+  findCoursesWithLiveClassesByInstructor,
+  findCoursesWithLiveClassesByStudent,
 } = require('../services/liveClassService');
+const { notifyStudentsAboutLiveClass } = require('../services/notificationService');
 
 const getLiveClasses = async (req, res, next) => {
   try {
@@ -88,6 +91,19 @@ const createLiveClassController = async (req, res, next) => {
       liveClass,
     });
 
+    // Send notifications to enrolled students
+    try {
+      const instructorName = req.user.name || 'Your instructor';
+      await notifyStudentsAboutLiveClass({
+        courseId: course_id,
+        liveClassTitle: title,
+        instructorName,
+      });
+    } catch (notificationError) {
+      console.error('Failed to send notifications:', notificationError);
+      // Don't fail the request if notifications fail
+    }
+
     // Emit real-time update to enrolled students
     if (global.io) {
       try {
@@ -97,7 +113,9 @@ const createLiveClassController = async (req, res, next) => {
           global.io.to(`user-${studentId}`).emit('live-class-scheduled', {
             liveClassId: liveClass.id,
             title: liveClass.title,
-            courseId: course_id
+            courseId: course_id,
+            scheduledAt: liveClass.scheduled_at,
+            meetLink: liveClass.meet_link,
           });
         });
       } catch (err) {
@@ -153,10 +171,30 @@ const deleteLiveClass = async (req, res, next) => {
   }
 };
 
+// Get courses with their live classes for instructors
+const getCoursesWithLiveClasses = async (req, res, next) => {
+  try {
+    if (req.user.role === 'instructor') {
+      const courses = await findCoursesWithLiveClassesByInstructor(req.user.id);
+      return res.json({ courses });
+    }
+
+    if (req.user.role === 'student') {
+      const courses = await findCoursesWithLiveClassesByStudent(req.user.id);
+      return res.json({ courses });
+    }
+
+    return res.json({ courses: [] });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getLiveClasses,
   getLiveClassById,
   createLiveClassController,
   updateLiveClass,
   deleteLiveClass,
+  getCoursesWithLiveClasses,
 };

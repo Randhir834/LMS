@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { Calendar, Clock, Users, Loader2, Plus, Edit2, Trash2, ExternalLink, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, Users, Loader2, Plus, Edit2, Trash2, ExternalLink, AlertCircle, BookOpen } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { liveClassService } from '@/services/liveClassService';
 import LiveClassForm from '@/components/LiveClassForm';
+import Link from 'next/link';
 import type { LiveClass } from '@/types';
 
 function InstructorLiveClassesContent() {
@@ -83,13 +84,21 @@ function InstructorLiveClassesContent() {
           </p>
         </div>
 
-        <Button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 w-full sm:w-auto"
-        >
-          <Plus className="size-4" />
-          Schedule Live Class
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Link href="/instructor/live-classes/courses">
+            <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+              <BookOpen className="size-4" />
+              View by Course
+            </Button>
+          </Link>
+          <Button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 w-full sm:w-auto"
+          >
+            <Plus className="size-4" />
+            Schedule Live Class
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

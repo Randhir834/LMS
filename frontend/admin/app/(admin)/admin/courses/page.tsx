@@ -108,7 +108,6 @@ function CoursesContent() {
   const stats = {
     total: courses.length,
     published: courses.filter(c => c.status === 'published').length,
-    draft: courses.filter(c => c.status === 'draft').length,
     archived: courses.filter(c => c.status === 'archived').length
   };
 
@@ -134,7 +133,7 @@ function CoursesContent() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
@@ -154,34 +153,12 @@ function CoursesContent() {
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-[#D97706]">{stats.draft}</div>
-              <div className="text-sm text-[#64748B]">Draft</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
               <div className="text-2xl font-bold text-[#64748B]">{stats.archived}</div>
               <div className="text-sm text-[#64748B]">Archived</div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <CourseFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            userRole="admin"
-            categories={categories}
-            instructors={instructors}
-            showAdvanced={true}
-          />
-        </CardContent>
-      </Card>
 
       {/* Course Grid */}
       {loading ? (

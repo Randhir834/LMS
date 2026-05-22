@@ -9,7 +9,7 @@ class SocketService {
       return this.socket;
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
     
     this.socket = io(backendUrl, {
       withCredentials: true,
@@ -62,6 +62,54 @@ class SocketService {
         this.socket.off('live-class-scheduled', callback);
       } else {
         this.socket.off('live-class-scheduled');
+      }
+    }
+  }
+
+  onCourseCreated(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('course-created', callback);
+    }
+  }
+
+  offCourseCreated(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('course-created', callback);
+      } else {
+        this.socket.off('course-created');
+      }
+    }
+  }
+
+  onCourseUpdated(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('course-updated', callback);
+    }
+  }
+
+  offCourseUpdated(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('course-updated', callback);
+      } else {
+        this.socket.off('course-updated');
+      }
+    }
+  }
+
+  onCourseDeleted(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('course-deleted', callback);
+    }
+  }
+
+  offCourseDeleted(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('course-deleted', callback);
+      } else {
+        this.socket.off('course-deleted');
       }
     }
   }

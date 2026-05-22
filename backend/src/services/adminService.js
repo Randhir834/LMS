@@ -226,17 +226,8 @@ const createInstructor = async (instructorData) => {
     throw new Error('Email already exists');
   }
 
-  // Generate a random password (8 characters)
-  const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-    let password = '';
-    for (let i = 0; i < 8; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
-  };
-
-  const plainPassword = generatePassword();
+  // Set default password to 12345
+  const plainPassword = '12345';
   const bcrypt = require('bcryptjs');
   const hashedPassword = await bcrypt.hash(plainPassword, 12);
 

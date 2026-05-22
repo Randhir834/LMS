@@ -1,5 +1,4 @@
-'use client';
-
+"use client";
 import { useState, useEffect } from 'react';
 import { 
   User, Mail, Phone, MapPin, Calendar, BookOpen, Video, 
@@ -7,6 +6,7 @@ import {
   Shield, Settings, HelpCircle, LogOut, Loader2, Star, Target, Trophy, Trash2, Save
 } from 'lucide-react';
 import StudentDashboardLayout from '@/components/layouts/StudentDashboardLayout';
+import { useRouter } from 'next/navigation';
 import { userService, UserProfile } from '@/services/userService';
 import { dashboardService, DashboardData } from '@/services/dashboardService';
 
@@ -18,15 +18,28 @@ function formatDateOfBirth(date?: string) {
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  // Removed unused password modal state
+  const router = useRouter();
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+const handleLogout = async () => {
+  try {
+    await userService.logout();
+  } catch (err) {
+    console.error('Logout error', err);
+  } finally {
+    router.push('/student/login');
+  }
+};
 
-  const handleLogout = () => {
-    userService.logout();
-  };
+  
 
   // Form states
   const [formData, setFormData] = useState({
@@ -46,7 +59,7 @@ export default function ProfilePage() {
           userService.getProfile(),
           dashboardService.getDashboardData()
         ]);
-        setUser(profile);
+        setProfile(profile);
         setDashboardData(dashData);
         setFormData(prev => ({
           ...prev,
@@ -79,7 +92,7 @@ export default function ProfilePage() {
         phone: formData.phone === 'N/A' ? undefined : formData.phone,
         location: formData.location === 'N/A' ? undefined : formData.location
       });
-      setUser(updatedUser);
+      setProfile(updatedUser);
       setFormData(prev => ({
         ...prev,
         name: updatedUser.name,
@@ -112,10 +125,10 @@ export default function ProfilePage() {
     );
   }
 
-  const displayName = user?.name || 'Student';
-  const role = user?.role || 'student';
-  const email = user?.email || '';
-  const joinDate = user?.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+  const displayName = profile?.name || 'Student';
+  const role = profile?.role || 'student';
+  const email = profile?.email || '';
+  const joinDate = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
 
   const stats = [
     { label: 'Enrolled Courses', value: dashboardData?.stats.enrolledCourses || 0, icon: BookOpen, color: 'text-[#1B8A44]', bg: 'bg-[#DCFCE7]' },
@@ -165,14 +178,15 @@ export default function ProfilePage() {
                       <input 
                         type="text"
                         value={formData.name}
+                        disabled={!isEditingProfile}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        className="text-xl md:text-2xl font-bold text-[#1E293B] bg-transparent border-none focus:ring-0 p-0 w-full md:w-auto text-center md:text-left"
+                        className={`text-xl md:text-2xl font-bold text-[#1E293B] bg-transparent border-none focus:ring-0 p-0 w-full md:w-auto text-center md:text-left ${isEditingProfile ? 'border-b border-gray-300' : ''}`}
                       />
                       <span className="px-3 py-0.5 bg-[#DCFCE7] text-[#1B8A44] text-xs font-semibold rounded-md capitalize">
                         {role}
                       </span>
                     </div>
-                    {formData.name !== user?.name && (
+                    {isEditingProfile ? (
                       <button 
                         onClick={handleUpdateProfile}
                         disabled={saving}
@@ -181,7 +195,7 @@ export default function ProfilePage() {
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                         Save Changes
                       </button>
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 md:gap-x-12">
@@ -190,28 +204,64 @@ export default function ProfilePage() {
                         <Calendar size={16} className="text-[#94A3B8] shrink-0" />
                         <span className="text-sm text-[#64748B]">Date of Birth</span>
                       </div>
-                      <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{formData.dob}</span>
+                      {isEditingProfile ? (
+                        <input
+                          type="text"
+                          value={formData.dob}
+                          onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                          className="text-sm font-medium text-[#1E293B] bg-transparent border-b border-gray-300 outline-none"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{formData.dob}</span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-12">
                       <div className="flex items-center gap-2 w-28 sm:w-32">
                         <Award size={16} className="text-[#94A3B8] shrink-0" />
                         <span className="text-sm text-[#64748B]">Grade</span>
                       </div>
-                      <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{formData.grade}</span>
+                      {isEditingProfile ? (
+                        <input
+                          type="text"
+                          value={formData.grade}
+                          onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                          className="text-sm font-medium text-[#1E293B] bg-transparent border-b border-gray-300 outline-none"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{formData.grade}</span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-12">
                       <div className="flex items-center gap-2 w-28 sm:w-32">
                         <BookOpen size={16} className="text-[#94A3B8] shrink-0" />
                         <span className="text-sm text-[#64748B]">School</span>
                       </div>
-                      <span className="text-sm font-medium text-[#1E293B] truncate max-w-[120px] sm:max-w-[150px] whitespace-nowrap">{formData.school}</span>
+                      {isEditingProfile ? (
+                        <input
+                          type="text"
+                          value={formData.school}
+                          onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-[#CBD5E1] text-sm text-[#1E293B] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1B8A44]/20 focus:border-[#1B8A44] disabled:opacity-60 truncate max-w-[120px] sm:max-w-[150px]"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-[#1E293B] truncate max-w-[120px] sm:max-w-[150px] whitespace-nowrap">{formData.school}</span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-12">
                       <div className="flex items-center gap-2 w-28 sm:w-32">
                         <User size={16} className="text-[#94A3B8] shrink-0" />
                         <span className="text-sm text-[#64748B]">Parent/Guardian</span>
                       </div>
-                      <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{formData.parentName}</span>
+                      {isEditingProfile ? (
+                        <input
+                          type="text"
+                          value={formData.parentName}
+                          onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
+                          className="text-sm font-medium text-[#1E293B] bg-transparent border-b border-gray-300 outline-none"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{formData.parentName}</span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-12">
                       <div className="flex items-center gap-2 w-28 sm:w-32">
@@ -236,9 +286,7 @@ export default function ProfilePage() {
                     <span className="text-lg md:text-xl font-bold text-[#1E293B]">{stat.value}</span>
                   </div>
                   <p className="text-[10px] md:text-xs text-[#64748B] mb-2">{stat.label}</p>
-                  <button className="text-[10px] md:text-[11px] text-[#1B8A44] font-semibold flex items-center gap-1">
-                    View all <ChevronRight size={12} />
-                  </button>
+
                 </div>
               ))}
             </div>
@@ -246,8 +294,6 @@ export default function ProfilePage() {
             {/* Recently Enrolled Courses */}
             <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-[#1E293B]">Recently Enrolled Courses</h3>
-                <button className="text-sm text-[#1B8A44] font-medium hover:underline">View All</button>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
@@ -282,7 +328,6 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 md:p-6">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-bold text-[#1E293B]">Contact Information</h3>
-                <button className="text-[11px] text-[#1B8A44] font-bold">Edit</button>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -295,13 +340,31 @@ export default function ProfilePage() {
                   <div className="w-8 h-8 bg-[#F8FAFC] rounded-lg flex items-center justify-center text-[#94A3B8]">
                     <Phone size={16} />
                   </div>
-                  <span className="text-sm text-[#64748B]">{formData.phone}</span>
+                      {isEditingProfile ? (
+                        <input
+                          type="text"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-[#CBD5E1] text-sm text-[#1E293B] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1B8A44]/20 focus:border-[#1B8A44] disabled:opacity-60"
+                        />
+                      ) : (
+                        <span className="text-sm text-[#64748B]">{formData.phone}</span>
+                      )}
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-[#F8FAFC] rounded-lg flex items-center justify-center text-[#94A3B8]">
                     <MapPin size={16} />
                   </div>
-                  <span className="text-sm text-[#64748B] line-clamp-1">{formData.location}</span>
+                      {isEditingProfile ? (
+                        <input
+                          type="text"
+                          value={formData.location}
+                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-[#CBD5E1] text-sm text-[#1E293B] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1B8A44]/20 focus:border-[#1B8A44] disabled:opacity-60"
+                        />
+                      ) : (
+                        <span className="text-sm text-[#64748B] line-clamp-1">{formData.location}</span>
+                      )}
                 </div>
               </div>
             </div>
@@ -309,8 +372,6 @@ export default function ProfilePage() {
             {/* Achievements Section */}
             <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 md:p-6">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="font-bold text-[#1E293B]">Achievements</h3>
-                <button className="text-[11px] text-[#1B8A44] font-bold">View All</button>
               </div>
               <div className="space-y-5">
                 {dashboardData?.achievements && dashboardData.achievements.length > 0 ? dashboardData.achievements.map((item, i) => (
@@ -343,7 +404,13 @@ export default function ProfilePage() {
                   { label: 'Notification Preferences', icon: Bell },
                   { label: 'Privacy Settings', icon: Settings },
                 ].map((item, i) => (
-                  <button key={i} className="w-full flex items-center justify-between p-3 hover:bg-[#F8FAFC] rounded-xl transition-colors group">
+                  <button 
+                    key={i} 
+                    className="w-full flex items-center justify-between p-3 hover:bg-[#F8FAFC] rounded-xl transition-colors group"
+                    onClick={() => {
+                       if (item.label === 'Change Password') router.push('/student/profile/change-password');
+                     }}
+                  >
                     <div className="flex items-center gap-3">
                       <item.icon size={18} className="text-[#94A3B8] group-hover:text-[#1B8A44]" />
                       <span className="text-sm text-[#64748B] font-medium">{item.label}</span>
@@ -352,24 +419,6 @@ export default function ProfilePage() {
                   </button>
                 ))}
 
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center justify-between p-3 hover:bg-[#FEF2F2] rounded-xl transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <LogOut size={18} className="text-[#DC2626] opacity-80" />
-                    <span className="text-sm text-[#DC2626] font-semibold">Logout</span>
-                  </div>
-                  <ChevronRight size={16} className="text-[#DC2626] opacity-50" />
-                </button>
-
-                <button className="w-full flex items-center justify-between p-3 hover:bg-[#FFF5F5] rounded-xl transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <Trash2 size={18} className="text-[#DC2626] opacity-50" />
-                    <span className="text-sm text-[#DC2626] font-medium">Deactivate Account</span>
-                  </div>
-                  <ChevronRight size={16} className="text-[#DC2626] opacity-30" />
-                </button>
               </div>
             </div>
           </div>

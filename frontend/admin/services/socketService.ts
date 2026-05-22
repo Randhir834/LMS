@@ -9,7 +9,7 @@ class SocketService {
       return this.socket;
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
     
     this.socket = io(backendUrl, {
       withCredentials: true,

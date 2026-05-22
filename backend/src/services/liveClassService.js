@@ -119,6 +119,80 @@ const deleteLiveClassById = async (id) => {
   await query('DELETE FROM live_classes WHERE id = $1', [id]);
 };
 
+// Get courses with their live classes for instructors
+const findCoursesWithLiveClassesByInstructor = async (instructorId) => {
+  const result = await query(
+    `SELECT 
+      c.id AS course_id,
+      c.title AS course_title,
+      c.description AS course_description,
+      c.thumbnail_url,
+      c.status AS course_status,
+      (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS enrollment_count,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', lc.id,
+            'title', lc.title,
+            'description', lc.description,
+            'meet_link', lc.meet_link,
+            'scheduled_at', lc.scheduled_at,
+            'duration_minutes', lc.duration_minutes,
+            'status', lc.status,
+            'created_at', lc.created_at
+          ) ORDER BY lc.scheduled_at DESC
+        ) FILTER (WHERE lc.id IS NOT NULL),
+        '[]'
+      ) AS live_classes
+    FROM courses c
+    INNER JOIN course_instructors ci ON ci.course_id = c.id
+    LEFT JOIN live_classes lc ON lc.course_id = c.id
+    WHERE ci.instructor_id = $1
+    GROUP BY c.id
+    ORDER BY c.created_at DESC`,
+    [instructorId]
+  );
+  return result.rows;
+};
+
+// Get enrolled courses with their live classes for students
+const findCoursesWithLiveClassesByStudent = async (studentId) => {
+  const result = await query(
+    `SELECT 
+      c.id AS course_id,
+      c.title AS course_title,
+      c.description AS course_description,
+      c.thumbnail_url,
+      e.progress,
+      e.status AS enrollment_status,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', lc.id,
+            'title', lc.title,
+            'description', lc.description,
+            'meet_link', lc.meet_link,
+            'scheduled_at', lc.scheduled_at,
+            'duration_minutes', lc.duration_minutes,
+            'status', lc.status,
+            'instructor_name', u.name,
+            'created_at', lc.created_at
+          ) ORDER BY lc.scheduled_at ASC
+        ) FILTER (WHERE lc.id IS NOT NULL AND lc.scheduled_at > NOW()),
+        '[]'
+      ) AS live_classes
+    FROM enrollments e
+    INNER JOIN courses c ON e.course_id = c.id
+    LEFT JOIN live_classes lc ON lc.course_id = c.id
+    LEFT JOIN users u ON lc.created_by = u.id
+    WHERE e.user_id = $1 AND e.status = 'active'
+    GROUP BY c.id, e.progress, e.status
+    ORDER BY c.title ASC`,
+    [studentId]
+  );
+  return result.rows;
+};
+
 module.exports = {
   findLiveClassesByCourse,
   findUpcomingLiveClasses,
@@ -127,4 +201,6 @@ module.exports = {
   createLiveClass,
   updateLiveClassById,
   deleteLiveClassById,
+  findCoursesWithLiveClassesByInstructor,
+  findCoursesWithLiveClassesByStudent,
 };

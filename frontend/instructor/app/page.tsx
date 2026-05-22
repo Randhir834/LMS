@@ -124,7 +124,7 @@ export default function Home() {
               Share Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 via-secondary-500 to-primary-600 bg-size-200 animate-gradient">Knowledge</span> With The World.
             </h1>
             <p className="text-lg md:text-xl text-dark-600 leading-relaxed max-w-xl">
-              Become an instructor at PlayFit LMS and inspire thousands of students. Create courses, share your expertise, and make a difference in education.
+              Become an instructor at PlayFit and inspire thousands of students. Create courses, share your expertise, and make a difference in education.
             </p>
             <div className="flex flex-wrap gap-4 mt-4">
               <a href="#register" className="group bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center gap-2">
@@ -300,7 +300,7 @@ export default function Home() {
               </div>
               <h2 className="text-4xl md:text-5xl font-bold leading-tight">Ready to Start Teaching?</h2>
               <p className="text-dark-200 text-lg md:text-xl leading-relaxed">
-                Register as an instructor today and start sharing your knowledge with thousands of eager students. Build your teaching career with PlayFit LMS.
+                Register as an instructor today and start sharing your knowledge with thousands of eager students. Build your teaching career with PlayFit.
               </p>
               <ul className="space-y-4 mt-8">
                 {[
@@ -497,7 +497,7 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
-          <p>&copy; 2024 PlayFit LMS. All rights reserved.</p>
+          <p>&copy; 2024 PlayFit. All rights reserved.</p>
         </div>
       </footer>
     </div>

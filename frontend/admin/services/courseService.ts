@@ -6,7 +6,7 @@ export interface CreateCourseData {
   price?: number;
   thumbnail_url?: string;
   category_id?: number;
-  status?: 'draft' | 'published' | 'archived';
+  status?: 'published' | 'archived';
   duration_value?: number;
   duration_unit?: 'days' | 'weeks' | 'months';
   level?: 'beginner' | 'intermediate' | 'advanced';

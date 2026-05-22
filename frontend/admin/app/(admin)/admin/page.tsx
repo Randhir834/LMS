@@ -16,9 +16,21 @@ export default function AdminHomePage() {
     const fetchStats = async () => {
       try {
         const res = await api.get('/admin/analytics');
-        setStats(res.data.stats);
-      } catch {
-        setStats(null);
+        setStats(res.data.stats || {
+          totalStudents: 0,
+          totalInstructors: 0,
+          totalCourses: 0,
+          totalRevenue: 0
+        });
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error);
+        // Set default stats if analytics fails
+        setStats({
+          totalStudents: 0,
+          totalInstructors: 0,
+          totalCourses: 0,
+          totalRevenue: 0
+        });
       } finally {
         setLoading(false);
       }

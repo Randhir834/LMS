@@ -23,10 +23,27 @@ export default function LoginPage() {
 
     try {
       const data = await authService.login({ email, password, expectedRole: 'instructor' });
+      
+      // Set authentication state first
       login(data.user, data.token);
-      router.push('/dashboard');
+      
+      // Small delay to ensure state is set before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Directly redirect to instructor dashboard - no password change required
+      router.push('/instructor');
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Login failed';
+      let message = 'Login failed';
+      
+      if (err && typeof err === 'object') {
+        const error = err as any;
+        if (error.response?.data?.error) {
+          message = error.response.data.error;
+        } else if (error.message) {
+          message = error.message;
+        }
+      }
+      
       setError(message);
     } finally {
       setLoading(false);
@@ -39,7 +56,7 @@ export default function LoginPage() {
         <>
           Welcome to
           <br />
-          <span className="text-yellow-300">PlayFit LMS</span> <span className="text-2xl">🎓</span>
+          <span className="text-yellow-300">PlayFit</span> <span className="text-2xl">🎓</span>
         </>
       }
       leftSubtitle="Empowering instructors to create, manage, and deliver exceptional learning experiences."

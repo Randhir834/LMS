@@ -37,9 +37,7 @@ export default function CourseCard({
     advanced: 'bg-[#FEE2E2] text-[#DC2626]',
   };
 
-  const formatPrice = (price: number) => {
-    return price === 0 ? 'Free' : `₹${price.toLocaleString()}`;
-  };
+
 
   const formatDuration = (value: number, unit: string) => {
     return `${value} ${unit}${value > 1 ? '' : ''}`;
@@ -60,49 +58,22 @@ export default function CourseCard({
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 border-[#E2E8F0] hover:border-[#1B8A44]/20">
-      <div className="relative">
-        {course.thumbnail_url ? (
-          <img
-            src={course.thumbnail_url}
-            alt={course.title}
-            className="w-full h-48 object-cover rounded-t-lg"
-          />
-        ) : (
-          <div className="w-full h-48 bg-gradient-to-br from-[#1B8A44]/10 to-[#1B8A44]/20 rounded-t-lg flex items-center justify-center">
-            <BookOpen className="size-12 text-[#1B8A44]/60" />
-          </div>
-        )}
-        
-        {/* Status Badge */}
-        <div className="absolute top-3 left-3">
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[course.status]}`}>
-            {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
-          </span>
-        </div>
+    <Link href={getViewLink()}>
+      <Card className="group hover:shadow-lg transition-all duration-200 border-[#E2E8F0] hover:border-[#1B8A44]/20 cursor-pointer h-full flex flex-col">
+        <div className="relative">
+          {course.thumbnail_url ? (
+            <img
+              src={course.thumbnail_url}
+              alt={course.title}
+              className="w-full h-48 object-cover rounded-t-lg"
+            />
+          ) : (
+            <div className="w-full h-48 bg-gradient-to-br from-[#1B8A44]/10 to-[#1B8A44]/20 rounded-t-lg flex items-center justify-center">
+              <BookOpen className="size-12 text-[#1B8A44]/60" />
+            </div>
+          )}
 
-        {/* View Button for Instructors - Small button at top */}
-        {userRole === 'instructor' && (
-          <div className="absolute top-3 left-1/2 transform -translate-x-1/2">
-            <Link href={getViewLink()}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="px-2 py-1 h-auto bg-white/90 hover:bg-white text-[#1B8A44] hover:text-[#1B8A44] shadow-sm"
-              >
-                <Eye className="size-3 mr-1" />
-                <span className="text-xs">View</span>
-              </Button>
-            </Link>
-          </div>
-        )}
 
-        {/* Price Badge */}
-        <div className="absolute top-3 right-3">
-          <span className="px-2 py-1 text-xs font-bold bg-white/90 text-[#1E293B] rounded-full shadow-sm">
-            {formatPrice(course.price)}
-          </span>
-        </div>
 
         {/* Progress Bar for Students */}
         {userRole === 'student' && course.is_enrolled && course.progress !== undefined && (
@@ -120,10 +91,10 @@ export default function CourseCard({
         )}
       </div>
 
-      <CardContent className="p-4">
-        <div className="space-y-3">
+      <CardContent className="p-4 flex flex-col flex-1">
+        <div className="space-y-2 flex-1">
           {/* Title and Level */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-[#1E293B] line-clamp-2 group-hover:text-[#1B8A44] transition-colors">
                 {course.title}
@@ -145,112 +116,17 @@ export default function CourseCard({
             <Users className="size-4" />
             <span className="truncate">{instructorNames}</span>
           </div>
-
-          {/* Course Stats */}
-          <div className="flex items-center justify-between text-sm text-[#64748B]">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <Clock className="size-4" />
-                <span>{formatDuration(course.duration_value, course.duration_unit)}</span>
-              </div>
-              
-              {course.enrollment_count !== undefined && (
-                <div className="flex items-center gap-1">
-                  <Users className="size-4" />
-                  <span>{course.enrollment_count}</span>
-                </div>
-              )}
-
-              {course.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                  <span>{course.rating.toFixed(1)}</span>
-                </div>
-              )}
-            </div>
-
-            {course.category_name && (
-              <span className="text-xs bg-[#F1F5F9] text-[#64748B] px-2 py-1 rounded">
-                {course.category_name}
-              </span>
-            )}
-          </div>
-
-          {/* Enrollment Status for Students */}
-          {userRole === 'student' && course.is_enrolled && (
-            <div className="flex items-center gap-2 text-sm text-[#1B8A44] bg-[#DCFCE7] px-3 py-2 rounded-lg">
-              <CheckCircle2 className="size-4" />
-              <span className="font-medium">Enrolled</span>
-            </div>
-          )}
-
-          {/* Actions */}
-          {showActions && (
-            <div className="flex items-center gap-2 pt-2 border-t border-[#E2E8F0]">
-              {/* Show large View button for students and admin, but not for instructors */}
-              {userRole !== 'instructor' && (
-                <Link href={getViewLink()} className="flex-1">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full flex items-center gap-2"
-                  >
-                    {userRole === 'student' ? (
-                      course.is_enrolled ? (
-                        <>
-                          <Play className="size-4" />
-                          Continue
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="size-4" />
-                          View Details
-                        </>
-                      )
-                    ) : (
-                      <>
-                        <Eye className="size-4" />
-                        View
-                      </>
-                    )}
-                  </Button>
-                </Link>
-              )}
-
-              {/* Only show Edit button for admin users */}
-              {userRole === 'admin' && onEdit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onEdit(course.id)}
-                  className="px-3"
-                >
-                  <Edit className="size-4" />
-                </Button>
-              )}
-
-              {userRole === 'admin' && onDelete && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(course.id)}
-                  disabled={deleting}
-                  className="px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              )}
-
-              {/* For instructors, show a message since they only have the small view button */}
-              {userRole === 'instructor' && (
-                <div className="flex-1 text-center py-2">
-                  <span className="text-xs text-[#64748B]">Use the View button above to access course materials</span>
-                </div>
-              )}
-            </div>
-          )}
         </div>
+
+        {/* Enrollment Status for Students */}
+        {userRole === 'student' && course.is_enrolled && (
+          <div className="flex items-center gap-2 text-sm text-[#1B8A44] bg-[#DCFCE7] px-3 py-2 rounded-lg">
+            <CheckCircle2 className="size-4" />
+            <span className="font-medium">Enrolled</span>
+          </div>
+        )}
       </CardContent>
     </Card>
+    </Link>
   );
 }

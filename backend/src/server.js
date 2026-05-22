@@ -60,18 +60,14 @@ app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: process.env.URLENCODED_LIMIT || '1mb' }));
 app.use(requestLogger);
 
-// Serve uploaded files with authentication
-app.use('/uploads', authenticate, express.static(path.join(__dirname, '../uploads'), {
+// Serve uploaded files publicly (no authentication required for images)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   setHeaders: (res, path) => {
     // Set security headers for uploaded files
     res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
+      'Cache-Control': 'public, max-age=3600',
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
-      'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline';",
-      'X-Download-Options': 'noopen'
     });
   }
 }));

@@ -22,6 +22,10 @@ export const useSocket = (userId?: number) => {
     onCourseMaterialUploaded: socketService.onCourseMaterialUploaded.bind(socketService),
     offCourseMaterialUploaded: socketService.offCourseMaterialUploaded.bind(socketService),
     onCourseAssigned: socketService.onCourseAssigned.bind(socketService),
-    offCourseAssigned: socketService.offCourseAssigned.bind(socketService)
+    offCourseAssigned: socketService.offCourseAssigned.bind(socketService),
+    onCourseUpdated: socketService.onCourseUpdated.bind(socketService),
+    offCourseUpdated: socketService.offCourseUpdated.bind(socketService),
+    onCourseDeleted: socketService.onCourseDeleted.bind(socketService),
+    offCourseDeleted: socketService.offCourseDeleted.bind(socketService)
   };
 };

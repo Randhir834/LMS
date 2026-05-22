@@ -4,6 +4,8 @@ const {
   findEnrollmentById,
   findEnrollmentByUserAndCourse,
   findAllEnrollments,
+  findCourseEnrollments,
+  getCourseEnrollmentStats,
 } = require('../services/enrollmentService');
 const { createPaymentRecord } = require('../services/paymentService');
 const { findCourseById } = require('../services/courseService');
@@ -93,10 +95,35 @@ const getAllEnrollments = async (req, res, next) => {
   }
 };
 
+// Get enrollments for a specific course (for instructors)
+const getCourseEnrollmentsController = async (req, res, next) => {
+  try {
+    const courseId = req.params.courseId;
+    const filters = {};
+    
+    if (req.query.status) filters.status = req.query.status;
+    if (req.query.search) filters.search = req.query.search;
+    if (req.query.sort_by) filters.sort_by = req.query.sort_by;
+    if (req.query.sort_order) filters.sort_order = req.query.sort_order;
+
+    const enrollments = await findCourseEnrollments(courseId, filters);
+    const stats = await getCourseEnrollmentStats(courseId);
+    
+    res.json({ 
+      enrollments,
+      stats,
+      total: enrollments.length
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   enrollCourse,
   getEnrollments,
   getEnrollmentById,
   checkEnrollment,
   getAllEnrollments,
+  getCourseEnrollmentsController,
 };
