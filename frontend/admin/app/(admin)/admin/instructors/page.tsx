@@ -94,7 +94,7 @@ export default function AdminInstructorsPage() {
             <select
               value={specializationFilter}
               onChange={(e) => setSpecializationFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm min-w-[160px]"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none text-sm min-w-[160px]"
             >
               <option value="">All Specializations</option>
               {uniqueSpecializations.map(specialization => (
@@ -105,7 +105,7 @@ export default function AdminInstructorsPage() {
             <select
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm min-w-[140px]"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none text-sm min-w-[140px]"
             >
               <option value="">All Locations</option>
               {uniqueLocations.map(location => (

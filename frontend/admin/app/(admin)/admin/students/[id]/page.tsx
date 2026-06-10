@@ -17,7 +17,7 @@ import type { User as UserType } from '@/types';
 export default function StudentProfilePage() {
   const params = useParams();
   const router = useRouter();
-  const userId = parseInt(params.id as string);
+  const userId = parseInt((params?.id as string) || "0");
   
   const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -175,9 +175,10 @@ export default function StudentProfilePage() {
         <div className="flex flex-col md:flex-row items-start gap-8">
           {user.avatar_url ? (
             <img 
-              src={user.avatar_url} 
+              src={user.avatar_url.startsWith('http') ? user.avatar_url : `http://localhost:5001${user.avatar_url}`}
               alt={user.name}
               className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+              key={user.avatar_url} // Force re-render when avatar changes
             />
           ) : (
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-3xl shadow-lg">

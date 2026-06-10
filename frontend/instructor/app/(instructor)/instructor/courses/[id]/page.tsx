@@ -2,14 +2,16 @@
 
 import { useEffect, useState, use, useCallback } from 'react';
 import Link from 'next/link';
-import { Loader2, Users, BookOpen, FileText, Video, Calendar, BarChart3, Eye, ExternalLink } from 'lucide-react';
+import { Loader2, Users, BookOpen, FileText, ExternalLink, Video } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { courseService } from '@/services/courseService';
 import { courseMaterialService, type CourseMaterial } from '@/services/courseMaterialService';
+import { enrollmentService } from '@/services/enrollmentService';
 import { useSocket } from '@/hooks/useSocket';
 import { socketService } from '@/services/socketService';
-import { useToast } from '@/components/ui/ToastContainer';
+import { getAvatarUrl } from '@/utils/avatarUtils';
+import ScheduleLiveClassModal from '@/components/modals/ScheduleLiveClassModal';
 import type { Course } from '@/types';
 
 export default function InstructorCourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,6 +24,7 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
   const [loading, setLoading] = useState(true);
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(true);
   const [materialsLoading, setMaterialsLoading] = useState(true);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   // Get user ID from localStorage or auth context
   const [userId, setUserId] = useState<number | undefined>();
@@ -40,7 +43,6 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
 
   // Initialize Socket.IO connection
   const { onCourseMaterialUploaded, offCourseMaterialUploaded } = useSocket(userId);
-  const { addToast } = useToast();
 
   const fetchMaterials = useCallback(async () => {
     try {
@@ -75,10 +77,8 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
     const fetchEnrollments = async () => {
       try {
         setEnrollmentsLoading(true);
-        // This would need to be implemented in the backend
-        // const response = await enrollmentService.getCourseEnrollments(courseId);
-        // setEnrollments(response.enrollments || []);
-        setEnrollments([]); // Placeholder
+        const response = await enrollmentService.getCourseEnrollments(courseId);
+        setEnrollments(response.enrollments || []);
       } catch (error) {
         console.error('Failed to fetch enrollments:', error);
         setEnrollments([]);
@@ -114,14 +114,6 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
         
         // Add the new material to the list
         setMaterials(prevMaterials => [data.material, ...prevMaterials]);
-        
-        // Show a notification
-        addToast({
-          type: 'success',
-          title: 'New Material Added',
-          message: `"${data.material.title}" has been uploaded to this course`,
-          duration: 6000
-        });
       }
     };
 
@@ -130,13 +122,13 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
     return () => {
       offCourseMaterialUploaded(handleMaterialUploaded);
     };
-  }, [courseId, onCourseMaterialUploaded, offCourseMaterialUploaded, addToast]);
+  }, [courseId, onCourseMaterialUploaded, offCourseMaterialUploaded]);
 
   if (loading) {
     return (
       <div className="p-4 md:p-8 max-w-[1200px] mx-auto">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-[#1B8A44]" />
+          <Loader2 className="size-8 animate-spin text-[#1E88E5]" />
         </div>
       </div>
     );
@@ -162,9 +154,6 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
 
   const instructorNames = course.instructors?.map(i => i.name).join(', ') || course.instructor_name || 'No instructor';
   const enrollmentCount = course.enrollment_count || 0;
-  const completionRate = enrollments.length > 0 
-    ? (enrollments.filter(e => e.progress === 100).length / enrollments.length) * 100 
-    : 0;
 
   const handleViewMaterial = async (material: CourseMaterial) => {
     try {
@@ -183,12 +172,12 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div className="flex-1">
+        <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-xl md:text-2xl font-bold text-[#1E293B]">{course.title}</h1>
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-              course.status === 'published' ? 'bg-[#DCFCE7] text-[#1B8A44]' :
-              course.status === 'draft' ? 'bg-[#E2E8F0] text-[#475569]' :
+              course.status === 'published' ? 'bg-[#DBEAFE] text-[#1E88E5]' :
+              course.status === 'archived' ? 'bg-[#FEE2E2] text-[#991B1B]' :
               'bg-[#F1F5F9] text-[#64748B]'
             }`}>
               {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
@@ -199,63 +188,38 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <Link href={`/instructor/courses/${courseId}/analytics`}>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <BarChart3 className="size-4" />
-              Analytics
-            </Button>
-          </Link>
-          <Link href={`/student/course/${courseId}`}>
-            <Button variant="ghost" size="sm" className="flex items-center gap-2">
-              <Eye className="size-4" />
-              Preview
-            </Button>
-          </Link>
-        </div>
+        <Button
+          onClick={() => setShowScheduleModal(true)}
+          className="flex items-center gap-2"
+        >
+          <Video className="size-4" />
+          Schedule Live Class
+        </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-[#1E293B]">{enrollmentCount}</div>
-              <div className="text-sm text-[#64748B]">Students Enrolled</div>
+              <div className="text-3xl font-bold text-[#1E293B]">{enrollmentCount}</div>
+              <div className="text-sm text-[#64748B] mt-2">Students Enrolled</div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-[#1B8A44]">{Math.round(completionRate)}%</div>
-              <div className="text-sm text-[#64748B]">Completion Rate</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[#D97706]">{course.total_lessons || 0}</div>
-              <div className="text-sm text-[#64748B]">Total Lessons</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[#7C3AED]">
-                {course.price === 0 ? 'Free' : `₹${course.price.toLocaleString()}`}
-              </div>
-              <div className="text-sm text-[#64748B]">Course Price</div>
+              <div className="text-3xl font-bold text-[#D97706]">{course.total_lessons || 0}</div>
+              <div className="text-sm text-[#64748B] mt-2">Total Lessons</div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           {/* Course Overview */}
           <Card>
             <CardHeader>
@@ -275,7 +239,7 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
                   <div className="space-y-1">
                     {course.what_you_learn.split('\n').filter(item => item.trim()).map((item, index) => (
                       <div key={index} className="flex items-start gap-2">
-                        <div className="size-1.5 bg-[#1B8A44] rounded-full mt-2 flex-shrink-0" />
+                        <div className="size-1.5 bg-[#1E88E5] rounded-full mt-2 flex-shrink-0" />
                         <span className="text-sm text-[#64748B]">{item.trim()}</span>
                       </div>
                     ))}
@@ -302,36 +266,24 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
           {/* Course Materials */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Course Materials</CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={fetchMaterials}
-                  disabled={materialsLoading}
-                  className="flex items-center gap-2"
-                >
-                  <Loader2 className={`size-4 ${materialsLoading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
-              </div>
+              <CardTitle>Course Materials</CardTitle>
             </CardHeader>
             <CardContent>
               {materialsLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="size-6 animate-spin text-[#1B8A44]" />
+                  <Loader2 className="size-6 animate-spin text-[#1E88E5]" />
                 </div>
               ) : materials.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="size-12 text-[#CBD5E1] mx-auto mb-3" />
                   <p className="text-sm text-[#64748B]">No materials uploaded yet</p>
                   <p className="text-xs text-[#64748B] mt-1">Materials will be uploaded by the admin</p>
-                  <p className="text-xs text-[#1B8A44] mt-2">New materials will appear automatically when uploaded</p>
+                  <p className="text-xs text-[#1E88E5] mt-2">New materials will appear automatically when uploaded</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {materials.map((material) => (
-                    <div key={material.id} className="flex items-center justify-between p-4 border border-[#E2E8F0] rounded-lg hover:border-[#1B8A44]/20 transition-colors">
+                    <div key={material.id} className="flex items-center justify-between p-4 border border-[#E2E8F0] rounded-lg hover:border-[#1E88E5]/20 transition-colors">
                       <div className="flex items-center gap-3 flex-1">
                         <div className="text-2xl">
                           {courseMaterialService.getFileIcon(material.file_type)}
@@ -368,58 +320,14 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
             </CardContent>
           </Card>
 
-          {/* Course Content Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm text-[#64748B]">
-                  <span>{course.total_sections || 0} sections • {course.total_lessons || 0} lessons</span>
-                  <Link href={`/instructor/courses/${courseId}/sections`} className="text-[#1B8A44] hover:underline">
-                    View Content
-                  </Link>
-                </div>
-                
-                {/* Sample Content Structure */}
-                <div className="space-y-3">
-                  <div className="border border-[#E2E8F0] rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Video className="size-5 text-[#64748B]" />
-                        <div>
-                          <h4 className="font-medium text-[#1E293B]">Introduction Section</h4>
-                          <p className="text-sm text-[#64748B]">3 lessons • 15 minutes</p>
-                        </div>
-                      </div>
-                      <Link href={`/instructor/courses/${courseId}/sections`}>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="size-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center py-4">
-                    <Link href={`/instructor/courses/${courseId}/sections`}>
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <Eye className="size-4" />
-                        View All Content
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* Student Enrollments */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Recent Enrollments</CardTitle>
-                <Link href={`/instructor/courses/${courseId}/students`} className="text-sm text-[#1B8A44] hover:underline">
+                <Link href={`/instructor/courses/${courseId}/students`} className="text-sm text-[#1E88E5] hover:underline">
                   View All Students
                 </Link>
               </div>
@@ -427,7 +335,7 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
             <CardContent>
               {enrollmentsLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="size-6 animate-spin text-[#1B8A44]" />
+                  <Loader2 className="size-6 animate-spin text-[#1E88E5]" />
                 </div>
               ) : enrollments.length === 0 ? (
                 <div className="text-center py-8">
@@ -436,124 +344,52 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {enrollments.slice(0, 5).map((enrollment, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="size-10 bg-[#1B8A44]/10 rounded-full flex items-center justify-center">
-                          <Users className="size-5 text-[#1B8A44]" />
+                  {enrollments.slice(0, 5).map((enrollment, index) => {
+                    const avatarUrl = getAvatarUrl(enrollment.avatar_url, enrollment.student_name);
+                    const showFallback = !enrollment.avatar_url;
+                    
+                    return (
+                      <div key={index} className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-lg">
+                        {!showFallback ? (
+                          <img 
+                            src={avatarUrl} 
+                            alt={enrollment.student_name}
+                            className="size-10 rounded-full object-cover"
+                            onError={(e) => {
+                              // Fallback to default avatar if image fails to load
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              const fallback = (e.target as HTMLImageElement).nextElementSibling;
+                              if (fallback) fallback.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`size-10 bg-[#1E88E5]/10 rounded-full flex items-center justify-center ${!showFallback ? 'hidden' : ''}`}>
+                          <Users className="size-5 text-[#1E88E5]" />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-[#1E293B]">{enrollment.student_name}</h4>
                           <p className="text-sm text-[#64748B]">Enrolled {new Date(enrollment.enrolled_at).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-[#1E293B]">{Math.round(enrollment.progress)}%</div>
-                        <div className="text-xs text-[#64748B]">Progress</div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Link href={`/instructor/courses/${courseId}/sections`}>
-                <div className="flex items-center gap-3 p-3 border border-[#E2E8F0] rounded-lg hover:border-[#1B8A44] transition-colors cursor-pointer">
-                  <div className="p-2 bg-[#1B8A44]/10 rounded-lg">
-                    <BookOpen className="size-4 text-[#1B8A44]" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-[#1E293B]">View Content</h4>
-                    <p className="text-sm text-[#64748B]">Browse sections and lessons</p>
-                  </div>
-                </div>
-              </Link>
 
-              <Link href={`/instructor/assignments?course_id=${courseId}`}>
-                <div className="flex items-center gap-3 p-3 border border-[#E2E8F0] rounded-lg hover:border-[#1B8A44] transition-colors cursor-pointer">
-                  <div className="p-2 bg-[#1B8A44]/10 rounded-lg">
-                    <FileText className="size-4 text-[#1B8A44]" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-[#1E293B]">Assignments</h4>
-                    <p className="text-sm text-[#64748B]">Create and grade assignments</p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href={`/instructor/live-classes?course_id=${courseId}`}>
-                <div className="flex items-center gap-3 p-3 border border-[#E2E8F0] rounded-lg hover:border-[#1B8A44] transition-colors cursor-pointer">
-                  <div className="p-2 bg-[#1B8A44]/10 rounded-lg">
-                    <Calendar className="size-4 text-[#1B8A44]" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-[#1E293B]">Live Classes</h4>
-                    <p className="text-sm text-[#64748B]">Schedule live sessions</p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href={`/instructor/courses/${courseId}/analytics`}>
-                <div className="flex items-center gap-3 p-3 border border-[#E2E8F0] rounded-lg hover:border-[#1B8A44] transition-colors cursor-pointer">
-                  <div className="p-2 bg-[#1B8A44]/10 rounded-lg">
-                    <BarChart3 className="size-4 text-[#1B8A44]" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-[#1E293B]">Analytics</h4>
-                    <p className="text-sm text-[#64748B]">View detailed insights</p>
-                  </div>
-                </div>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Course Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-[#1E293B]">Status</span>
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  course.status === 'published' ? 'bg-[#DCFCE7] text-[#1B8A44]' :
-                  course.status === 'draft' ? 'bg-[#E2E8F0] text-[#475569]' :
-                  'bg-[#F1F5F9] text-[#64748B]'
-                }`}>
-                  {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-[#1E293B]">Price</span>
-                <span className="text-sm text-[#64748B]">
-                  {course.price === 0 ? 'Free' : `₹${course.price.toLocaleString()}`}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-[#1E293B]">Category</span>
-                <span className="text-sm text-[#64748B]">{course.category_name || 'Uncategorized'}</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-[#1E293B]">Language</span>
-                <span className="text-sm text-[#64748B]">{course.language}</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
+      
+      {/* Schedule Live Class Modal */}
+      <ScheduleLiveClassModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        courseId={courseId}
+        courseTitle={course.title}
+        onSuccess={() => setShowScheduleModal(false)}
+      />
     </div>
   );
 }

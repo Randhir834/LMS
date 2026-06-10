@@ -159,8 +159,8 @@ const serveSecureFile = catchAsync(async (req, res) => {
       true
     );
 
-    // Get signed URL from Supabase
-    const signedUrl = await getSecureFileUrl(tokenData.file_path, 300); // 5 minutes
+    // Get signed URL from Supabase or local file URL
+    const signedUrl = await getSecureFileUrl(tokenData.file_path, 1800); // 30 minutes
 
     // Set security headers to prevent caching and downloading
     res.set({
@@ -168,8 +168,8 @@ const serveSecureFile = catchAsync(async (req, res) => {
       'Pragma': 'no-cache',
       'Expires': '0',
       'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline';",
+      'X-Frame-Options': 'SAMEORIGIN', // Changed from DENY to allow iframe viewing
+      'Content-Security-Policy': "default-src 'none'; img-src 'self' data: blob:; style-src 'unsafe-inline'; media-src 'self' blob:; object-src 'self';",
       'X-Download-Options': 'noopen',
       'Content-Disposition': 'inline'
     });

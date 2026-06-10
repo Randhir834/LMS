@@ -108,7 +108,7 @@ export default function AdminStudentsPage() {
             <select
               value={gradeFilter}
               onChange={(e) => setGradeFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm min-w-[120px]"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none text-sm min-w-[120px]"
             >
               <option value="">All Grades</option>
               {uniqueGrades.map(grade => (
@@ -119,7 +119,7 @@ export default function AdminStudentsPage() {
             <select
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm min-w-[140px]"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none text-sm min-w-[140px]"
             >
               <option value="">All Locations</option>
               {uniqueLocations.map(location => (

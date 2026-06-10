@@ -248,7 +248,6 @@ export default function CourseMaterialsManager({
                 <Input
                   value={uploadForm.title}
                   onChange={(e) => setUploadForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter material title"
                 />
               </div>
               <div>
@@ -258,7 +257,6 @@ export default function CourseMaterialsManager({
                 <Input
                   value={uploadForm.description}
                   onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Optional description"
                 />
               </div>
             </div>
@@ -287,7 +285,7 @@ export default function CourseMaterialsManager({
       {/* Materials List */}
       <Card>
         <CardHeader>
-          <CardTitle>Uploaded Materials ({materials.length})</CardTitle>
+          <CardTitle>Uploaded Materials</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (

@@ -23,6 +23,7 @@ export default function RoleGuard({
 
     try {
       const user = JSON.parse(rawUser) as { role?: string };
+      
       if (!user?.role || !allowedRoles.includes(user.role as 'admin' | 'instructor' | 'student')) {
         localStorage.removeItem('user');
         localStorage.removeItem('token');

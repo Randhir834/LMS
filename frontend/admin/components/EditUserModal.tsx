@@ -119,16 +119,16 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="modal-responsive bg-white shadow-2xl max-w-2xl w-full">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
-          <h2 className="text-xl font-bold text-gray-900">
-            Edit {user.role === 'student' ? 'Student' : 'Instructor'} Profile
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-xl z-10">
+          <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
+            Edit {user.role === 'student' ? 'Student' : 'Instructor'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="touch-target p-2 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Close modal"
           >
             <X size={20} className="text-gray-500" />
@@ -136,7 +136,7 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-600 text-sm">{error}</p>
@@ -301,11 +301,11 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-6 border-t border-gray-200">
+          <div className="button-group-responsive pt-4 sm:pt-6 border-t border-gray-200 sticky bottom-0 bg-white -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
             <Button 
               type="button" 
               variant="outline" 
-              className="flex-1" 
+              className="flex-1 touch-target" 
               onClick={onClose}
               disabled={loading}
             >
@@ -314,18 +314,20 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
             <Button 
               type="submit" 
               variant="primary" 
-              className="flex-1 flex items-center justify-center gap-2"
+              className="flex-1 touch-target flex items-center justify-center gap-2"
               disabled={loading}
             >
               {loading ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Saving...
+                  <span className="hidden sm:inline">Saving...</span>
+                  <span className="sm:hidden">Save</span>
                 </>
               ) : (
                 <>
-                  <Save size={16} />
-                  Save Changes
+                  <Save size={16} className="hidden sm:inline" />
+                  <span className="hidden sm:inline">Save Changes</span>
+                  <span className="sm:hidden">Save</span>
                 </>
               )}
             </Button>

@@ -137,10 +137,10 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'present': return 'text-[#1B8A44] bg-[#DCFCE7]';
-      case 'absent': return 'text-[#DC2626] bg-[#FEE2E2]';
+      case 'present': return 'text-[#1E88E5] bg-[#C5E1A5]';
+      case 'absent': return 'text-[#EC407A] bg-[#FEE2E2]';
       case 'late': return 'text-[#D97706] bg-[#FEF3C7]';
-      default: return 'text-[#64748B] bg-[#F1F5F9]';
+      default: return 'text-[#78909C] bg-[#FAFAFA]';
     }
   };
 
@@ -161,7 +161,7 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
     return (
       <div className="p-4 md:p-8 max-w-[1200px] mx-auto">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-[#1B8A44]" />
+          <Loader2 className="size-8 animate-spin text-[#1E88E5]" />
         </div>
       </div>
     );
@@ -173,7 +173,7 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
         <Card>
           <CardContent>
             <div className="text-center py-8">
-              <p className="text-sm text-[#64748B]">Course not found.</p>
+              <p className="text-sm text-[#78909C]">Course not found.</p>
               <Link href="/instructor/attendance" className="inline-block mt-4">
                 <Button variant="outline">Back to Attendance</Button>
               </Link>
@@ -188,20 +188,20 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/instructor/attendance">
-          <Button variant="ghost" size="sm" className="flex items-center gap-2">
-            <ArrowLeft className="size-4" />
-            Back
+        <div className="flex-1">
+          <h1 className="text-xl md:text-2xl font-bold text-[#1E3A5F]">{course.title}</h1>
+          <p className="text-sm text-[#78909C]">Mark attendance for your students</p>
+        </div>
+        <Link href={`/instructor/attendance/${courseId}/summary`}>
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Users className="size-4" />
+            View Summary
           </Button>
         </Link>
-        <div className="flex-1">
-          <h1 className="text-xl md:text-2xl font-bold text-[#1E293B]">{course.title}</h1>
-          <p className="text-sm text-[#64748B]">Mark attendance for your students</p>
-        </div>
       </div>
 
       {/* Date Selection and Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="space-y-2">
@@ -221,8 +221,8 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-[#1B8A44]">{presentCount}</div>
-              <div className="text-sm text-[#64748B]">Present</div>
+              <div className="text-2xl font-bold text-[#1E88E5]">{presentCount}</div>
+              <div className="text-sm text-[#78909C]">Present</div>
             </div>
           </CardContent>
         </Card>
@@ -230,17 +230,8 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-[#DC2626]">{absentCount}</div>
-              <div className="text-sm text-[#64748B]">Absent</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[#D97706]">{lateCount}</div>
-              <div className="text-sm text-[#64748B]">Late</div>
+              <div className="text-2xl font-bold text-[#EC407A]">{absentCount}</div>
+              <div className="text-sm text-[#78909C]">Absent</div>
             </div>
           </CardContent>
         </Card>
@@ -251,8 +242,8 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Users className="size-5 text-[#64748B]" />
-              <span className="font-medium text-[#1E293B]">
+              <Users className="size-5 text-[#78909C]" />
+              <span className="font-medium text-[#1E3A5F]">
                 {students.length} Students
               </span>
             </div>
@@ -288,35 +279,31 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
         <CardContent>
           {students.length === 0 ? (
             <div className="text-center py-8">
-              <Users className="size-12 text-[#CBD5E1] mx-auto mb-3" />
-              <p className="text-sm text-[#64748B]">No students enrolled in this course.</p>
+              <Users className="size-12 text-[#E0E0E0] mx-auto mb-3" />
+              <p className="text-sm text-[#78909C]">No students enrolled in this course.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {students.map((student) => (
-                <div key={student.id} className="border border-[#E2E8F0] rounded-lg p-4">
+                <div key={student.id} className="border border-[#E0E0E0] rounded-lg p-4">
                   <div className="flex items-start gap-4">
                     {/* Student Info */}
                     <div className="flex-1">
-                      <h4 className="font-medium text-[#1E293B]">{student.name}</h4>
-                      <p className="text-sm text-[#64748B]">{student.email}</p>
-                      <p className="text-xs text-[#64748B] mt-1">
-                        Progress: {Math.round(student.progress)}% • 
-                        Enrolled: {new Date(student.enrolled_at).toLocaleDateString()}
-                      </p>
+                      <h4 className="font-medium text-[#1E3A5F]">{student.name}</h4>
+                      <p className="text-sm text-[#78909C]">{student.email}</p>
                     </div>
 
                     {/* Attendance Status */}
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
-                        {['present', 'absent', 'late'].map((status) => (
+                        {['present', 'absent'].map((status) => (
                           <button
                             key={status}
                             onClick={() => updateAttendance(student.id, 'status', status)}
                             className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-colors flex items-center gap-2 ${
                               attendance[student.id]?.status === status
                                 ? `${getStatusColor(status)} border-current`
-                                : 'text-[#64748B] bg-white border-[#E2E8F0] hover:border-[#1B8A44]'
+                                : 'text-[#78909C] bg-white border-[#E0E0E0] hover:border-[#1E88E5]'
                             }`}
                           >
                             {getStatusIcon(status)}
@@ -325,19 +312,6 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
                         ))}
                       </div>
                     </div>
-                  </div>
-
-                  {/* Notes */}
-                  <div className="mt-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <MessageSquare className="size-4 text-[#64748B]" />
-                      <label className="text-sm font-medium text-[#374151]">Notes (optional)</label>
-                    </div>
-                    <Input
-                      placeholder="Add notes about this student's attendance..."
-                      value={attendance[student.id]?.notes || ''}
-                      onChange={(e) => updateAttendance(student.id, 'notes', e.target.value)}
-                    />
                   </div>
                 </div>
               ))}
@@ -359,9 +333,7 @@ export default function MarkAttendancePage({ params }: { params: Promise<{ cours
           >
             {saving ? (
               <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
-            )}
+            ) : null}
             {saving ? 'Saving...' : 'Save Attendance'}
           </Button>
         </div>

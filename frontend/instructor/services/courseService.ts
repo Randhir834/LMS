@@ -53,15 +53,20 @@ export const courseService = {
     sort_by?: string; 
     sort_order?: string; 
   }) => {
-    const params = new URLSearchParams();
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value);
-      });
+    try {
+      const params = new URLSearchParams();
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) params.append(key, value);
+        });
+      }
+      const query = params.toString() ? `?${params.toString()}` : '';
+      const response = await api.get(`/courses/my-courses${query}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching instructor courses:', error);
+      throw new Error(error.response?.data?.error || 'Failed to fetch courses. Please check your connection and try again.');
     }
-    const query = params.toString() ? `?${params.toString()}` : '';
-    const response = await api.get(`/courses/my-courses${query}`);
-    return response.data;
   },
 
   createCourse: async (data: any) => {

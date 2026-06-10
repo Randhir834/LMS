@@ -26,7 +26,7 @@ interface User {
 export default function Navigation() {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   useEffect(() => {
     const userData = localStorage.getItem('user');

@@ -148,17 +148,17 @@ export default function SecureFileViewer({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex flex-col z-50">
       {/* Security Warning Bar */}
-      <div className="bg-red-600 text-white px-4 py-2 flex items-center justify-between">
+      <div className="bg-[#1E88E5] text-white px-4 py-2 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Shield className="h-5 w-5" />
           <span className="font-medium">SECURE VIEW MODE</span>
-          <span className="text-red-200">Screenshots and downloads are disabled</span>
+          <span className="text-green-100">Course Material</span>
         </div>
         <Button
           onClick={handleClose}
           variant="ghost"
           size="sm"
-          className="text-white hover:bg-red-700"
+          className="text-white hover:bg-green-700"
         >
           <X className="h-5 w-5" />
         </Button>
@@ -192,7 +192,8 @@ export default function SecureFileViewer({
               src={secureUrl}
               className="w-full h-full border-0"
               title={fileName}
-              sandbox="allow-same-origin"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              allow="fullscreen"
               style={{
                 filter: isBlurred ? 'blur(10px)' : 'none',
                 pointerEvents: isBlurred ? 'none' : 'auto'

@@ -20,4 +20,10 @@ export const enrollmentService = {
     const response = await api.get(`/enrollments/check/${courseId}`);
     return response.data;
   },
+
+  getCourseEnrollments: async (courseId: number, filters?: { status?: string; search?: string; sort_by?: string; sort_order?: string }) => {
+    const response = await api.get(`/enrollments/course/${courseId}`, { params: filters });
+    return response.data;
+  },
 };
+

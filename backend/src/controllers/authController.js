@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { findUserByEmail, createUser, updateUserPassword } = require('../services/userService');
+const { findUserByEmail, findUserByEmailOrPhone, createUser, updateUserPassword } = require('../services/userService');
 const { createResetToken, findUserIdByValidToken, deleteTokensForUser } = require('../services/passwordResetService');
 const { sendEmail } = require('../services/emailService');
 
@@ -68,17 +68,23 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    const { email, password, expectedRole } = req.body;
+    const { email, phone, identifier, password, expectedRole } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+    // Support multiple login methods:
+    // 1. Legacy: email + password
+    // 2. New: phone + password
+    // 3. Unified: identifier (email or phone) + password
+    let loginIdentifier = email || phone || identifier;
+
+    if (!loginIdentifier || !password) {
+      return res.status(400).json({ error: 'Email/Phone and password are required.' });
     }
 
     if (expectedRole && !ALLOWED_ROLES.includes(expectedRole)) {
       return res.status(400).json({ error: 'Invalid expectedRole.' });
     }
 
-    const user = await findUserByEmail(email);
+    const user = await findUserByEmailOrPhone(loginIdentifier);
     if (!user) {
       return res.status(401).json({ error: "You don't have an account." });
     }
@@ -132,17 +138,23 @@ const refreshToken = async (req, res, next) => {
 
 const forgotPassword = async (req, res, next) => {
   try {
-    const { email, expectedRole, clientOrigin } = req.body;
+    const { email, phone, identifier, expectedRole, clientOrigin } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required.' });
+    // Support multiple reset methods:
+    // 1. Legacy: email
+    // 2. New: phone
+    // 3. Unified: identifier (email or phone)
+    let resetIdentifier = email || phone || identifier;
+
+    if (!resetIdentifier) {
+      return res.status(400).json({ error: 'Email or phone number is required.' });
     }
 
     if (expectedRole && !ALLOWED_ROLES.includes(expectedRole)) {
       return res.status(400).json({ error: 'Invalid expectedRole.' });
     }
 
-    const user = await findUserByEmail(email);
+    const user = await findUserByEmailOrPhone(resetIdentifier);
     const roleOk = user && (!expectedRole || user.role === expectedRole);
 
     if (roleOk) {
@@ -154,6 +166,7 @@ const forgotPassword = async (req, res, next) => {
       const html = `<p>We received a request to reset your password.</p><p><a href="${link}">Create new password</a></p><p>If you did not request this, you can ignore this email.</p>`;
       const text = `Reset your password: ${link}`;
 
+      // Always send to email even if user searched by phone
       const result = await sendEmail({
         to: user.email,
         subject,
@@ -168,7 +181,7 @@ const forgotPassword = async (req, res, next) => {
 
     res.json({
       message:
-        'If an account exists for this email, password reset instructions have been generated. Check your email or server logs in development.',
+        'If an account exists for this email or phone number, password reset instructions have been sent to the registered email address. Check your email or server logs in development.',
     });
   } catch (error) {
     next(error);

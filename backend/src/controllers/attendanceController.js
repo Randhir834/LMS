@@ -52,6 +52,33 @@ const submitAttendance = async (req, res, next) => {
       return res.status(400).json({ error: 'Course ID, date, and students array are required' });
     }
     
+    // Validate date format and not in future
+    const attendanceDate = new Date(date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    
+    if (isNaN(attendanceDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+    
+    if (attendanceDate > today) {
+      return res.status(400).json({ error: 'Cannot mark attendance for future dates' });
+    }
+    
+    // Validate students array
+    if (students.length === 0) {
+      return res.status(400).json({ error: 'At least one student is required' });
+    }
+    
+    for (const student of students) {
+      if (!student.student_id || !student.status) {
+        return res.status(400).json({ error: 'Each student must have student_id and status' });
+      }
+      if (!['present', 'absent', 'late'].includes(student.status)) {
+        return res.status(400).json({ error: 'Invalid status. Must be present, absent, or late' });
+      }
+    }
+    
     // Validate that instructor is assigned to this course
     const instructorCourses = await getInstructorCourses(instructor_id);
     const hasAccess = instructorCourses.some(course => course.id === parseInt(course_id));
@@ -108,6 +135,98 @@ const getCourseAttendanceStats = async (req, res, next) => {
   }
 };
 
+const getStudentAttendanceHistory = async (req, res, next) => {
+  try {
+    const studentId = req.params.studentId === 'me' ? req.user.id : req.params.studentId;
+    const { courseId } = req.query;
+    
+    // If not admin/instructor, students can only view their own records
+    if (req.user.role === 'student' && studentId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    const filters = { student_id: studentId };
+    if (courseId) filters.course_id = courseId;
+    
+    const attendance = await getAttendanceReport(filters);
+    res.json({ attendance });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getStudentStats = async (req, res, next) => {
+  try {
+    const studentId = req.params.studentId === 'me' ? req.user.id : req.params.studentId;
+    const { courseId } = req.query;
+    
+    // If not admin/instructor, students can only view their own records
+    if (req.user.role === 'student' && studentId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    const { query } = require('../config/database');
+    
+    let sql = `
+      SELECT 
+        COUNT(*) as total_classes,
+        COUNT(CASE WHEN status = 'present' THEN 1 END) as present_count,
+        COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_count,
+        COUNT(CASE WHEN status = 'late' THEN 1 END) as late_count,
+        ROUND(
+          (COUNT(CASE WHEN status = 'present' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0)), 2
+        ) as attendance_percentage
+      FROM attendance
+      WHERE student_id = $1
+    `;
+    
+    const params = [studentId];
+    
+    if (courseId) {
+      sql += ' AND course_id = $2';
+      params.push(courseId);
+    }
+    
+    const result = await query(sql, params);
+    res.json({ stats: result.rows[0] });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAttendanceSummary = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const { query } = require('../config/database');
+    
+    // Get summary with student-wise attendance
+    const result = await query(
+      `SELECT 
+        u.id as student_id,
+        u.name as student_name,
+        u.email as student_email,
+        COUNT(a.id) as total_classes,
+        COUNT(CASE WHEN a.status = 'present' THEN 1 END) as present_count,
+        COUNT(CASE WHEN a.status = 'absent' THEN 1 END) as absent_count,
+        COUNT(CASE WHEN a.status = 'late' THEN 1 END) as late_count,
+        ROUND(
+          (COUNT(CASE WHEN a.status = 'present' THEN 1 END) * 100.0 / NULLIF(COUNT(a.id), 0)), 2
+        ) as attendance_percentage
+      FROM users u
+      INNER JOIN enrollments e ON e.user_id = u.id
+      LEFT JOIN attendance a ON a.student_id = u.id AND a.course_id = e.course_id
+      WHERE e.course_id = $1 AND e.status = 'active' AND u.role = 'student'
+      GROUP BY u.id, u.name, u.email
+      ORDER BY u.name`,
+      [courseId]
+    );
+    
+    res.json({ summary: result.rows });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getInstructorCoursesForAttendance,
   getCourseStudentsForAttendance,
@@ -115,4 +234,7 @@ module.exports = {
   submitAttendance,
   getAttendanceReports,
   getCourseAttendanceStats,
+  getStudentAttendanceHistory,
+  getAttendanceSummary,
+  getStudentStats,
 };

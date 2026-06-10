@@ -216,13 +216,13 @@ const logMaterialAccess = async (materialId, userId, accessType, ipAddress, user
  * Get signed URL for secure file access
  */
 const getSecureFileUrl = async (filePath, expiresIn = 1800) => {
-  // Check if it's a local file path
-  if (filePath.startsWith('uploads/') || filePath.includes('course-materials')) {
+  // Check if it's a local file path (starts with uploads/)
+  if (filePath.startsWith('uploads/')) {
     // Local file - return the local URL
     return getLocalFileUrl(filePath);
   }
 
-  // Supabase file - try to get signed URL
+  // Otherwise, it's a Supabase file - try to get signed URL
   const supabase = getSupabaseClient();
   
   try {

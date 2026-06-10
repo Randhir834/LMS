@@ -37,5 +37,14 @@ export function useAuth() {
     setUser(null);
   }, []);
 
-  return { user, loading, login, logout, isAuthenticated: !!user };
+  const updateUser = useCallback((userData: Partial<User>) => {
+    const currentUser = user;
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...userData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+  }, [user]);
+
+  return { user, loading, login, logout, updateUser, isAuthenticated: !!user };
 }

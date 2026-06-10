@@ -82,7 +82,7 @@ export const instructorDashboardService = {
         title: course.title || 'Untitled Course',
         enrolledStudents: course.enrollment_count || 0,
         price: course.price || 0,
-        status: course.status || 'draft'
+        status: course.status || 'published'
       }));
     } catch (error) {
       console.error('Error fetching instructor courses:', error);

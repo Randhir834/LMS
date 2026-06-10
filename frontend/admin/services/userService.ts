@@ -23,6 +23,31 @@ export const userService = {
     return response.data.user;
   },
 
+  changePassword: async (oldPassword: string, newPassword: string, confirmPassword: string): Promise<void> => {
+    const response = await api.post('/users/change-password', {
+      oldPassword,
+      newPassword,
+      confirmPassword,
+    });
+    return response.data;
+  },
+
+  uploadProfilePhoto: async (file: File): Promise<{ avatar_url: string; user: UserProfile }> => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    const response = await api.post('/users/profile-photo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  deleteProfilePhoto: async (): Promise<{ user: UserProfile }> => {
+    const response = await api.delete('/users/profile-photo');
+    return response.data;
+  },
+
   logout: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');

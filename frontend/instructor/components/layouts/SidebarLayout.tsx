@@ -56,7 +56,13 @@ function SidebarLayoutContent({ children, items, title = 'PlayFit LMS', searchPl
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
           {(!collapsed || !mobileOpen) && (
-            <h1 className={cn('text-lg font-bold text-primary-500', collapsed && 'hidden md:block')}>{title}</h1>
+            <div className="flex items-center gap-2 flex-1">
+              <img
+                src="/images/playfit-logo.jpg"
+                alt="PlayFit"
+                className="h-12 sm:h-16 md:h-20 w-auto object-contain"
+              />
+            </div>
           )}
           <div className="flex items-center gap-2">
             {/* Desktop collapse toggle */}
@@ -100,7 +106,6 @@ function SidebarLayoutContent({ children, items, title = 'PlayFit LMS', searchPl
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted size-4" />
             <input
               type="text"
-              placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -122,7 +127,6 @@ function SidebarLayoutContent({ children, items, title = 'PlayFit LMS', searchPl
             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-text-muted size-3" />
             <input
               type="text"
-              placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-7 pr-3 py-1 bg-background border border-border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"

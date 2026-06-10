@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Mail, Calendar, Badge, ChevronRight, User, Phone, MapPin, GraduationCap, Award, Users, BookOpen } from 'lucide-react';
 import type { User as UserType } from '@/types';
+import { getAvatarUrl } from '@/utils/avatarUtils';
 
 interface UserCardProps {
   user: UserType;
@@ -17,6 +18,8 @@ export default function UserCard({ user, role }: UserCardProps) {
       router.push(`/admin/students/${user.id}`);
     } else if (role === 'instructor') {
       router.push(`/admin/instructors/${user.id}`);
+    } else if (role === 'admin') {
+      router.push(`/admin/admins/${user.id}`);
     }
   };
   const getRoleColor = (userRole: string) => {
@@ -63,7 +66,7 @@ export default function UserCard({ user, role }: UserCardProps) {
           <div className="flex-shrink-0">
             {user.avatar_url ? (
               <img 
-                src={user.avatar_url} 
+                src={getAvatarUrl(user.avatar_url, user.name)}
                 alt={user.name}
                 className="w-16 h-16 rounded-full object-cover border-2 border-gray-100"
               />
@@ -143,12 +146,10 @@ export default function UserCard({ user, role }: UserCardProps) {
             )}
             
             {user.qualifications && (
-              <div className="flex items-start gap-2 text-sm text-gray-600">
-                <GraduationCap size={14} className="text-indigo-500 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-medium">Qualifications:</span>
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{user.qualifications}</p>
-                </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <GraduationCap size={14} className="text-indigo-500" />
+                <span className="font-medium">Qualifications:</span>
+                <span className="truncate">{user.qualifications}</span>
               </div>
             )}
           </>
@@ -185,9 +186,6 @@ export default function UserCard({ user, role }: UserCardProps) {
         <div className="flex items-center gap-1 text-xs text-gray-500">
           <Calendar size={12} />
           <span>Joined {formatDate(user.created_at)}</span>
-        </div>
-        <div className="text-xs text-gray-400">
-          ID: #{user.id}
         </div>
       </div>
 

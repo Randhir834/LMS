@@ -8,6 +8,7 @@ import {
 import Button from '@/components/ui/Button';
 import { adminService } from '@/services/adminService';
 import type { User as UserType } from '@/types';
+import { getAvatarUrl } from '@/utils/avatarUtils';
 
 interface UserDetailModalProps {
   userId: number;
@@ -82,14 +83,14 @@ export default function UserDetailModal({ userId, role, onClose }: UserDetailMod
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="modal-responsive bg-white shadow-2xl max-w-2xl w-full">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
-          <h2 className="text-xl font-bold text-gray-900">User Profile Details</h2>
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-xl z-10">
+          <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">User Profile</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="touch-target p-2 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Close modal"
           >
             <X size={20} className="text-gray-500" />
@@ -97,7 +98,7 @@ export default function UserDetailModal({ userId, role, onClose }: UserDetailMod
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-4 md:p-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <Loader2 size={40} className="text-primary-500 animate-spin" />
@@ -117,7 +118,7 @@ export default function UserDetailModal({ userId, role, onClose }: UserDetailMod
               <div className="flex flex-col items-center gap-6 pb-6 border-b border-gray-200">
                 {user.avatar_url ? (
                   <img 
-                    src={user.avatar_url} 
+                    src={getAvatarUrl(user.avatar_url, user.name)}
                     alt={user.name}
                     className="w-24 h-24 rounded-full object-cover border-4 border-gray-100 shadow-lg"
                   />
@@ -287,17 +288,18 @@ export default function UserDetailModal({ userId, role, onClose }: UserDetailMod
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-6 border-t border-gray-200">
-                <Button variant="outline" className="flex-1" onClick={onClose}>
+              <div className="button-group-responsive pt-4 sm:pt-6 border-t border-gray-200 sticky bottom-0 bg-white -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+                <Button variant="outline" className="flex-1 touch-target" onClick={onClose}>
                   Close
                 </Button>
-                <Button variant="primary" className="flex items-center gap-2">
-                  <Edit size={16} />
-                  Edit Profile
+                <Button variant="primary" className="flex-1 touch-target flex items-center justify-center gap-2">
+                  <Edit size={16} className="hidden sm:inline" />
+                  <span className="hidden sm:inline">Edit Profile</span>
+                  <span className="sm:hidden">Edit</span>
                 </Button>
-                <Button variant="ghost" className="text-red-600 hover:bg-red-50 flex items-center gap-2">
-                  <Trash2 size={16} />
-                  Delete
+                <Button variant="ghost" className="flex-1 touch-target text-red-600 hover:bg-red-50 flex items-center justify-center gap-2">
+                  <Trash2 size={16} className="hidden sm:inline" />
+                  <span>Delete</span>
                 </Button>
               </div>
             </div>

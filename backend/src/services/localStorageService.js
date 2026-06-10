@@ -52,18 +52,21 @@ const deleteFromLocal = async (filePath) => {
 };
 
 /**
- * Generate secure URL for local file (just return the path for now)
+ * Generate secure URL for local file
  */
 const getLocalFileUrl = (filePath) => {
   // Normalize path separators
   const normalizedPath = filePath.replace(/\\/g, '/');
   
+  // Get the backend base URL from environment
+  const backendUrl = process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
+  
   // If path already starts with uploads/, don't add another /uploads/ prefix
   if (normalizedPath.startsWith('uploads/')) {
-    return `/${normalizedPath}`;
+    return `${backendUrl}/${normalizedPath}`;
   }
   
-  return `/uploads/${normalizedPath}`;
+  return `${backendUrl}/uploads/${normalizedPath}`;
 };
 
 module.exports = {

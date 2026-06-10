@@ -9,7 +9,7 @@ import { authService } from '@/services/authService';
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
-  const token = searchParams.get('token') || '';
+  const token = searchParams?.get('token') || '';
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -52,7 +52,7 @@ function ResetPasswordForm() {
       {done ? (
         <div className="text-center space-y-4">
           <p className="text-sm text-text-secondary">Your password was updated. You can sign in now.</p>
-          <Link href="/login" className="text-primary-500 hover:text-primary-600 font-semibold">
+          <Link href="/instructor/login" className="text-primary-500 hover:text-primary-600 font-semibold">
             Back to sign in
           </Link>
         </div>
@@ -90,7 +90,7 @@ function ResetPasswordForm() {
       )}
 
       <p className="mt-6 text-center text-sm text-text-muted">
-        <Link href="/login" className="text-primary-500 hover:text-primary-600 font-semibold">
+        <Link href="/instructor/login" className="text-primary-500 hover:text-primary-600 font-semibold">
           Back to sign in
         </Link>
       </p>

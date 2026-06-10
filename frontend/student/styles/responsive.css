@@ -279,15 +279,15 @@
 
 /* Responsive Modal */
 .modal-responsive {
-  position: fixed;
-  inset: 1rem;
+  position: relative;
+  margin: 1rem;
   max-height: calc(100vh - 2rem);
   border-radius: 0.75rem;
 }
 
 @media (min-width: 640px) {
   .modal-responsive {
-    inset: 2rem;
+    margin: 2rem;
     max-height: calc(100vh - 4rem);
     border-radius: 1rem;
   }
@@ -295,14 +295,12 @@
 
 @media (min-width: 1024px) {
   .modal-responsive {
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
+    margin: 0;
     width: 90%;
     max-width: 600px;
     height: auto;
     max-height: 90vh;
-    inset: auto;
   }
 }
 

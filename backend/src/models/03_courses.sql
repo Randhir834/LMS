@@ -7,7 +7,7 @@ CREATE TABLE courses (
   thumbnail_url TEXT,
   category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
   instructor_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  status VARCHAR(50) DEFAULT 'draft',
+  status VARCHAR(50) DEFAULT 'published',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
