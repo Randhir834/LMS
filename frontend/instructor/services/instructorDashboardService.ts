@@ -50,16 +50,22 @@ export interface InstructorDashboardData {
 export const instructorDashboardService = {
   getDashboardStats: async (): Promise<InstructorDashboardStats> => {
     try {
-      const [courses, liveClasses, enrollments] = await Promise.all([
+      const [courses, liveClasses] = await Promise.all([
         courseService.getCourses(),
-        liveClassService.getLiveClasses(),
-        enrollmentService.getEnrollments()
+        liveClassService.getLiveClasses()
       ]);
 
+      // Calculate total students from all courses
+      let totalStudents = 0;
+      const coursesList = normalizeToArray(courses);
+      coursesList.forEach((course: any) => {
+        totalStudents += course.enrollment_count || 0;
+      });
+
       return {
-        coursesCreated: courses?.data?.length || courses?.length || 0,
-        liveClassesConducted: liveClasses?.data?.length || liveClasses?.length || 0,
-        totalStudents: enrollments?.data?.length || enrollments?.length || 0,
+        coursesCreated: coursesList.length || 0,
+        liveClassesConducted: normalizeToArray(liveClasses).length || 0,
+        totalStudents: totalStudents,
         totalEarnings: 0
       };
     } catch (error) {

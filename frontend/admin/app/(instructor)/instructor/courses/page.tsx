@@ -33,7 +33,7 @@ export default function InstructorCoursesPage() {
       try {
         setLoading(true);
         // Fetch courses where the current user is an instructor
-        const response = await courseService.getCoursesByInstructor(user.id);
+        const response = await courseService.getInstructorCourses(user.id);
         setCourses(response.courses || []);
       } catch (error) {
         console.error('Failed to fetch instructor courses:', error);

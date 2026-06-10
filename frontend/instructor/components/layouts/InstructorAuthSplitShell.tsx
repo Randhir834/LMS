@@ -14,7 +14,7 @@ export default function InstructorAuthSplitShell({ leftTitle, leftSubtitle, cent
       <div className="md:hidden bg-[#1B8A44] px-6 py-8 text-center">
         <img
           src="/images/navbarlogo.png"
-          alt="PlayFit LMS"
+          alt="PlayFit"
           className="h-12 w-auto mx-auto mb-2"
         />
         <p className="text-sm text-white/80">Instructor Portal</p>

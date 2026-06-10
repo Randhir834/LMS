@@ -26,7 +26,6 @@ export default function CourseCard({
   linkPrefix = ''
 }: CourseCardProps) {
   const statusColors = {
-    draft: 'bg-[#E2E8F0] text-[#475569]',
     published: 'bg-[#DCFCE7] text-[#1B8A44]',
     archived: 'bg-[#F1F5F9] text-[#64748B]',
   };
@@ -60,33 +59,20 @@ export default function CourseCard({
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 border-[#E2E8F0] hover:border-[#1B8A44]/20">
-      <div className="relative">
-        {course.thumbnail_url ? (
-          <img
-            src={course.thumbnail_url}
-            alt={course.title}
-            className="w-full h-48 object-cover rounded-t-lg"
-          />
-        ) : (
-          <div className="w-full h-48 bg-gradient-to-br from-[#1B8A44]/10 to-[#1B8A44]/20 rounded-t-lg flex items-center justify-center">
-            <BookOpen className="size-12 text-[#1B8A44]/60" />
-          </div>
-        )}
-        
-        {/* Status Badge */}
-        <div className="absolute top-3 left-3">
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[course.status]}`}>
-            {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
-          </span>
-        </div>
-
-        {/* Price Badge */}
-        <div className="absolute top-3 right-3">
-          <span className="px-2 py-1 text-xs font-bold bg-white/90 text-[#1E293B] rounded-full shadow-sm">
-            {formatPrice(course.price)}
-          </span>
-        </div>
+    <Link href={getViewLink()}>
+      <Card className="group hover:shadow-lg transition-all duration-200 border-[#E2E8F0] hover:border-[#1B8A44]/20 h-full flex flex-col cursor-pointer">
+        <div className="relative">
+          {course.thumbnail_url ? (
+            <img
+              src={course.thumbnail_url}
+              alt={course.title}
+              className="w-full h-48 object-cover rounded-t-lg"
+            />
+          ) : (
+            <div className="w-full h-48 bg-gradient-to-br from-[#1B8A44]/10 to-[#1B8A44]/20 rounded-t-lg flex items-center justify-center">
+              <BookOpen className="size-12 text-[#1B8A44]/60" />
+            </div>
+          )}
 
         {/* Progress Bar for Students */}
         {userRole === 'student' && course.is_enrolled && course.progress !== undefined && (
@@ -104,10 +90,10 @@ export default function CourseCard({
         )}
       </div>
 
-      <CardContent className="p-4">
-        <div className="space-y-3">
+      <CardContent className="p-4 flex flex-col flex-1">
+        <div className="space-y-2 flex-1">
           {/* Title and Level */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-[#1E293B] line-clamp-2 group-hover:text-[#1B8A44] transition-colors">
                 {course.title}
@@ -129,101 +115,17 @@ export default function CourseCard({
             <Users className="size-4" />
             <span className="truncate">{instructorNames}</span>
           </div>
-
-          {/* Course Stats */}
-          <div className="flex items-center justify-between text-sm text-[#64748B]">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <Clock className="size-4" />
-                <span>{formatDuration(course.duration_value, course.duration_unit)}</span>
-              </div>
-              
-              {course.enrollment_count !== undefined && (
-                <div className="flex items-center gap-1">
-                  <Users className="size-4" />
-                  <span>{course.enrollment_count}</span>
-                </div>
-              )}
-
-              {course.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                  <span>{course.rating.toFixed(1)}</span>
-                </div>
-              )}
-            </div>
-
-            {course.category_name && (
-              <span className="text-xs bg-[#F1F5F9] text-[#64748B] px-2 py-1 rounded">
-                {course.category_name}
-              </span>
-            )}
-          </div>
-
-          {/* Enrollment Status for Students */}
-          {userRole === 'student' && course.is_enrolled && (
-            <div className="flex items-center gap-2 text-sm text-[#1B8A44] bg-[#DCFCE7] px-3 py-2 rounded-lg">
-              <CheckCircle2 className="size-4" />
-              <span className="font-medium">Enrolled</span>
-            </div>
-          )}
-
-          {/* Actions */}
-          {showActions && (
-            <div className="flex items-center gap-2 pt-2 border-t border-[#E2E8F0]">
-              <Link href={getViewLink()} className="flex-1">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full flex items-center gap-2"
-                >
-                  {userRole === 'student' ? (
-                    course.is_enrolled ? (
-                      <>
-                        <Play className="size-4" />
-                        Continue
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="size-4" />
-                        View Details
-                      </>
-                    )
-                  ) : (
-                    <>
-                      <Eye className="size-4" />
-                      View
-                    </>
-                  )}
-                </Button>
-              </Link>
-
-              {(userRole === 'admin' || (userRole === 'instructor' && getEditLink())) && onEdit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onEdit(course.id)}
-                  className="px-3"
-                >
-                  <Edit className="size-4" />
-                </Button>
-              )}
-
-              {userRole === 'admin' && onDelete && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(course.id)}
-                  disabled={deleting}
-                  className="px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              )}
-            </div>
-          )}
         </div>
+
+        {/* Enrollment Status for Students */}
+        {userRole === 'student' && course.is_enrolled && (
+          <div className="flex items-center gap-2 text-sm text-[#1B8A44] bg-[#DCFCE7] px-3 py-2 rounded-lg">
+            <CheckCircle2 className="size-4" />
+            <span className="font-medium">Enrolled</span>
+          </div>
+        )}
       </CardContent>
     </Card>
+    </Link>
   );
 }

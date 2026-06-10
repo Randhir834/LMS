@@ -42,7 +42,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
   const [results, setResults] = useState<SearchResponse | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const debounceRef = useRef<NodeJS.Timeout>();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -138,7 +138,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
   const getIcon = (type: string) => {
     switch (type) {
       case 'course':
-        return <BookOpen className="text-[#1E88E5]" size={18} />;
+        return <BookOpen className="text-[#1B8A44]" size={18} />;
       case 'lesson':
         return <Video className="text-[#3B82F6]" size={18} />;
       case 'section':
@@ -194,8 +194,8 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <span className={`text-xs px-2 py-0.5 rounded-full ${
                 item.status === 'published' || item.status === 'active' || item.status === 'completed'
                   ? 'bg-[#D1FAE5] text-[#065F46]'
-                  : item.status === 'archived'
-                  ? 'bg-[#FEE2E2] text-[#991B1B]'
+                  : item.status === 'draft'
+                  ? 'bg-[#FEF3C7] text-[#92400E]'
                   : 'bg-[#E5E7EB] text-[#374151]'
               }`}>
                 {item.status}
@@ -236,7 +236,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
           {item.duration && (
             <p className="text-xs text-[#64748B] mt-1">⏱️ {item.duration} min</p>
           )}
-          {/* Price hidden for instructors */}
+
         </div>
       </button>
     );
@@ -268,6 +268,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
         <input
           ref={inputRef}
           type="text"
+          placeholder={getPlaceholder()}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => {
@@ -275,11 +276,11 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               setIsOpen(true);
             }
           }}
-          className="w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-1 sm:py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-transparent"
+          className="w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-1 sm:py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
         />
         {(query || isLoading) && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-            {isLoading && <Loader2 className="text-[#1E88E5] animate-spin" size={18} />}
+            {isLoading && <Loader2 className="text-[#1B8A44] animate-spin" size={18} />}
             {query && !isLoading && (
               <button
                 onClick={handleClear}
@@ -312,7 +313,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Courses
+                    Courses ({results.results.courses.length})
                   </p>
                 </div>
                 {results.results.courses.map((item) => renderResultItem(item, 'course'))}
@@ -322,7 +323,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Sections
+                    Sections ({results.results.sections.length})
                   </p>
                 </div>
                 {results.results.sections.map((item) => renderResultItem(item, 'section'))}
@@ -332,7 +333,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Lessons
+                    Lessons ({results.results.lessons.length})
                   </p>
                 </div>
                 {results.results.lessons.map((item) => renderResultItem(item, 'lesson'))}
@@ -342,7 +343,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Assignments
+                    Assignments ({results.results.assignments.length})
                   </p>
                 </div>
                 {results.results.assignments.map((item) => renderResultItem(item, 'assignment'))}
@@ -352,7 +353,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Quizzes
+                    Quizzes ({results.results.quizzes.length})
                   </p>
                 </div>
                 {results.results.quizzes.map((item) => renderResultItem(item, 'quiz'))}
@@ -362,7 +363,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Live Classes
+                    Live Classes ({results.results.liveClasses.length})
                   </p>
                 </div>
                 {results.results.liveClasses.map((item) => renderResultItem(item, 'live_class'))}
@@ -372,7 +373,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Students
+                    Students ({results.results.users.length})
                   </p>
                 </div>
                 {results.results.users.map((item) => renderResultItem(item, 'user'))}
@@ -382,7 +383,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Categories
+                    Categories ({results.results.categories.length})
                   </p>
                 </div>
                 {results.results.categories.map((item) => renderResultItem(item, 'category'))}
@@ -392,7 +393,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Enrollments
+                    Enrollments ({results.results.enrollments.length})
                   </p>
                 </div>
                 {results.results.enrollments.map((item) => renderResultItem(item, 'enrollment'))}

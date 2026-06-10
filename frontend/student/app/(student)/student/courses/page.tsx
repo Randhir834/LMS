@@ -12,10 +12,14 @@ import StudentDashboardLayout from '@/components/layouts/StudentDashboardLayout'
 import { courseService } from '@/services/courseService';
 import { categoryService } from '@/services/categoryService';
 import { enrollmentService } from '@/services/enrollmentService';
+import { useAuth } from '@/hooks/useAuth';
+import { useSocket } from '@/hooks/useSocket';
 import type { Course, Category } from '@/types';
 
 function StudentCoursesContent() {
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const { onCourseCreated, offCourseCreated, onCourseUpdated, offCourseUpdated, onCourseDeleted, offCourseDeleted } = useSocket(user?.id);
   const [courses, setCourses] = useState<Course[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +44,7 @@ function StudentCoursesContent() {
       
       // Check enrollment status for each course
       const coursesWithEnrollment = await Promise.all(
-        (data.courses || []).map(async (course) => {
+        (data.courses || []).map(async (course: Course) => {
           try {
             const enrollmentData = await enrollmentService.checkEnrollment(course.id);
             return {
@@ -78,15 +82,37 @@ function StudentCoursesContent() {
 
   useEffect(() => {
     fetchCategories();
+
+    // Set up real-time listeners
+    onCourseCreated((data) => {
+      console.log('[Real-time] New course created:', data);
+      fetchCourses(); // Refresh the course list
+    });
+
+    onCourseUpdated((data) => {
+      console.log('[Real-time] Course updated:', data);
+      fetchCourses(); // Refresh the course list
+    });
+
+    onCourseDeleted((data) => {
+      console.log('[Real-time] Course deleted:', data);
+      setCourses(prev => prev.filter(c => c.id !== data.courseId));
+    });
+
+    return () => {
+      offCourseCreated();
+      offCourseUpdated();
+      offCourseDeleted();
+    };
   }, []);
 
-  const handleFiltersChange = (newFilters: typeof filters) => {
+  const handleFiltersChange = (newFilters: any) => {
     setFilters(newFilters);
     
     // Update URL params
     const params = new URLSearchParams();
     Object.entries(newFilters).forEach(([key, value]) => {
-      if (value) params.set(key, value);
+      if (value) params.set(key, String(value));
     });
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
@@ -119,22 +145,7 @@ function StudentCoursesContent() {
             </p>
           </div>
           
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/student/my-courses">
-              <Button variant="outline" size="sm" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
-                <BookOpen className="size-3 sm:size-4" />
-                <span className="hidden xs:inline">My Courses</span>
-                <span className="xs:hidden">My</span>
-              </Button>
-            </Link>
-            <Link href="/student/wishlist">
-              <Button variant="outline" size="sm" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
-                <Heart className="size-3 sm:size-4" />
-                <span className="hidden xs:inline">Wishlist</span>
-                <span className="xs:hidden">List</span>
-              </Button>
-            </Link>
-          </div>
+
         </div>
 
         {/* Stats Cards */}
@@ -172,19 +183,6 @@ function StudentCoursesContent() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Filters */}
-        <Card>
-          <CardContent className="p-3 sm:p-4">
-            <CourseFilters
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              userRole="student"
-              categories={categories}
-              showAdvanced={true}
-            />
-          </CardContent>
-        </Card>
 
         {/* Course Sections */}
         {loading ? (

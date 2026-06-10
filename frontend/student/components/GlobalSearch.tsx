@@ -42,7 +42,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
   const [results, setResults] = useState<SearchResponse | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -145,13 +145,13 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
   const getIcon = (type: string) => {
     switch (type) {
       case 'course':
-        return <BookOpen className="text-[#1E88E5]" size={18} />;
+        return <BookOpen className="text-[#1B8A44]" size={18} />;
       case 'lesson':
-        return <Video className="text-[#1E88E5]" size={18} />;
+        return <Video className="text-[#3B82F6]" size={18} />;
       case 'section':
         return <Folder className="text-[#8B5CF6]" size={18} />;
       case 'assignment':
-        return <FileText className="text-[#FFA726]" size={18} />;
+        return <FileText className="text-[#F59E0B]" size={18} />;
       case 'quiz':
         return <FileText className="text-[#EF4444]" size={18} />;
       case 'live_class':
@@ -159,7 +159,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
       case 'category':
         return <Shapes className="text-[#10B981]" size={18} />;
       default:
-        return <Search className="text-[#78909C]" size={18} />;
+        return <Search className="text-[#64748B]" size={18} />;
     }
   };
 
@@ -185,12 +185,12 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
       <button
         key={`${type}-${item.id}`}
         onClick={() => handleResultClick(type, item.id, item)}
-        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-[#FAFAFA] transition-colors text-left border-b border-[#E0E0E0] last:border-b-0"
+        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-[#F8FAFC] transition-colors text-left border-b border-[#E2E8F0] last:border-b-0"
       >
         <div className="mt-0.5 shrink-0">{getIcon(type)}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-[#78909C] uppercase tracking-wide">
+            <span className="text-xs font-medium text-[#64748B] uppercase tracking-wide">
               {getTypeLabel(type)}
             </span>
             {isAvailable && (
@@ -204,29 +204,29 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               </span>
             )}
           </div>
-          <p className="text-sm font-semibold text-[#1E3A5F] mb-1 truncate">
+          <p className="text-sm font-semibold text-[#1E293B] mb-1 truncate">
             {item.title || item.name || `${type} #${item.id}`}
           </p>
           {item.description && (
-            <p className="text-xs text-[#78909C] line-clamp-2">{item.description}</p>
+            <p className="text-xs text-[#64748B] line-clamp-2">{item.description}</p>
           )}
           {item.course_title && type !== 'course' && (
-            <p className="text-xs text-[#78909C] mt-1">
+            <p className="text-xs text-[#64748B] mt-1">
               📚 Course: {item.course_title}
             </p>
           )}
           {item.category_name && (
-            <p className="text-xs text-[#78909C] mt-1">
+            <p className="text-xs text-[#64748B] mt-1">
               🏷️ {item.category_name}
             </p>
           )}
           {item.duration && (
-            <p className="text-xs text-[#78909C] mt-1">
+            <p className="text-xs text-[#64748B] mt-1">
               ⏱️ {item.duration} minutes
             </p>
           )}
           {item.price !== undefined && item.price !== null && (
-            <p className="text-xs font-semibold text-[#1E88E5] mt-1">
+            <p className="text-xs font-semibold text-[#1B8A44] mt-1">
               {item.price === 0 ? 'Free' : `₹${item.price}`}
             </p>
           )}
@@ -255,10 +255,11 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
   return (
     <div ref={searchRef} className={`relative ${className}`}>
       <div className="relative">
-        <Search className="absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-[#B0BEC5] size-4 sm:size-[18px]" />
+        <Search className="absolute left-3 sm:left-3.5 top-1/2 transform -translate-y-1/2 text-[#94A3B8] size-4 sm:size-[18px]" />
         <input
           ref={inputRef}
           type="text"
+          placeholder={getPlaceholder()}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => {
@@ -266,15 +267,15 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               setIsOpen(true);
             }
           }}
-          className="w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-1 sm:py-1.5 bg-[#FAFAFA] border border-[#E0E0E0] rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-transparent"
+          className="w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-1 sm:py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
         />
         {(query || isLoading) && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-            {isLoading && <Loader2 className="text-[#1E88E5] animate-spin" size={18} />}
+            {isLoading && <Loader2 className="text-[#1B8A44] animate-spin" size={18} />}
             {query && !isLoading && (
               <button
                 onClick={handleClear}
-                className="text-[#78909C] hover:text-[#1E3A5F] transition-colors"
+                className="text-[#64748B] hover:text-[#1E293B] transition-colors"
                 aria-label="Clear search"
               >
                 <X size={18} />
@@ -286,13 +287,13 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
 
       {/* Results Dropdown */}
       {isOpen && hasResults && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E0E0E0] rounded-lg shadow-xl max-h-[70vh] overflow-y-auto z-50">
-          <div className="sticky top-0 bg-white border-b border-[#E0E0E0] px-4 py-3">
-            <p className="text-sm font-semibold text-[#1E3A5F]">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E2E8F0] rounded-lg shadow-xl max-h-[70vh] overflow-y-auto z-50">
+          <div className="sticky top-0 bg-white border-b border-[#E2E8F0] px-4 py-3">
+            <p className="text-sm font-semibold text-[#1E293B]">
               Found {results.totalResults} result{results.totalResults !== 1 ? 's' : ''} for "{query}"
             </p>
             {getSearchContext(pathname || '').type && (
-              <p className="text-xs text-[#78909C] mt-1">
+              <p className="text-xs text-[#64748B] mt-1">
                 🎯 Prioritizing results from current page
               </p>
             )}
@@ -301,9 +302,9 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
           <div className="py-2">
             {results.results.courses.length > 0 && (
               <div>
-                <div className="px-4 py-2 bg-[#FAFAFA] border-b border-[#E0E0E0]">
-                  <p className="text-xs font-semibold text-[#78909C] uppercase tracking-wide">
-                    Courses
+                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+                    Courses ({results.results.courses.length})
                   </p>
                 </div>
                 {results.results.courses.map((item) => renderResultItem(item, 'course'))}
@@ -311,9 +312,9 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
             )}
             {results.results.sections && results.results.sections.length > 0 && (
               <div>
-                <div className="px-4 py-2 bg-[#FAFAFA] border-b border-[#E0E0E0]">
-                  <p className="text-xs font-semibold text-[#78909C] uppercase tracking-wide">
-                    Sections
+                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+                    Sections ({results.results.sections.length})
                   </p>
                 </div>
                 {results.results.sections.map((item: any) => renderResultItem(item, 'section'))}
@@ -321,9 +322,9 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
             )}
             {results.results.lessons.length > 0 && (
               <div>
-                <div className="px-4 py-2 bg-[#FAFAFA] border-b border-[#E0E0E0]">
-                  <p className="text-xs font-semibold text-[#78909C] uppercase tracking-wide">
-                    Lessons
+                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+                    Lessons ({results.results.lessons.length})
                   </p>
                 </div>
                 {results.results.lessons.map((item) => renderResultItem(item, 'lesson'))}
@@ -331,9 +332,9 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
             )}
             {results.results.assignments.length > 0 && (
               <div>
-                <div className="px-4 py-2 bg-[#FAFAFA] border-b border-[#E0E0E0]">
-                  <p className="text-xs font-semibold text-[#78909C] uppercase tracking-wide">
-                    Assignments
+                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+                    Assignments ({results.results.assignments.length})
                   </p>
                 </div>
                 {results.results.assignments.map((item) => renderResultItem(item, 'assignment'))}
@@ -341,9 +342,9 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
             )}
             {results.results.quizzes.length > 0 && (
               <div>
-                <div className="px-4 py-2 bg-[#FAFAFA] border-b border-[#E0E0E0]">
-                  <p className="text-xs font-semibold text-[#78909C] uppercase tracking-wide">
-                    Quizzes
+                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+                    Quizzes ({results.results.quizzes.length})
                   </p>
                 </div>
                 {results.results.quizzes.map((item) => renderResultItem(item, 'quiz'))}
@@ -351,9 +352,9 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
             )}
             {results.results.liveClasses.length > 0 && (
               <div>
-                <div className="px-4 py-2 bg-[#FAFAFA] border-b border-[#E0E0E0]">
-                  <p className="text-xs font-semibold text-[#78909C] uppercase tracking-wide">
-                    Live Classes
+                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+                    Live Classes ({results.results.liveClasses.length})
                   </p>
                 </div>
                 {results.results.liveClasses.map((item) => renderResultItem(item, 'live_class'))}
@@ -361,9 +362,9 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
             )}
             {results.results.categories.length > 0 && (
               <div>
-                <div className="px-4 py-2 bg-[#FAFAFA] border-b border-[#E0E0E0]">
-                  <p className="text-xs font-semibold text-[#78909C] uppercase tracking-wide">
-                    Categories
+                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+                    Categories ({results.results.categories.length})
                   </p>
                 </div>
                 {results.results.categories.map((item) => renderResultItem(item, 'category'))}
@@ -375,10 +376,10 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
 
       {/* No Results */}
       {isOpen && results && !hasResults && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E0E0E0] rounded-lg shadow-xl p-8 text-center z-50">
-          <Search className="mx-auto text-[#E0E0E0] mb-3" size={48} />
-          <p className="text-sm font-semibold text-[#1E3A5F] mb-1">No results found</p>
-          <p className="text-xs text-[#78909C]">Try searching with different keywords</p>
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E2E8F0] rounded-lg shadow-xl p-8 text-center z-50">
+          <Search className="mx-auto text-[#CBD5E1] mb-3" size={48} />
+          <p className="text-sm font-semibold text-[#1E293B] mb-1">No results found</p>
+          <p className="text-xs text-[#64748B]">Try searching with different keywords</p>
         </div>
       )}
     </div>

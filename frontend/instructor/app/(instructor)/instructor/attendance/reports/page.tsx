@@ -57,7 +57,7 @@ export default function AttendanceReportsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'present': return 'text-[#1E88E5] bg-[#DBEAFE]';
+      case 'present': return 'text-[#1B8A44] bg-[#DCFCE7]';
       case 'absent': return 'text-[#DC2626] bg-[#FEE2E2]';
       case 'late': return 'text-[#D97706] bg-[#FEF3C7]';
       default: return 'text-[#64748B] bg-[#F1F5F9]';
@@ -113,7 +113,7 @@ export default function AttendanceReportsPage() {
               <select
                 value={filters.course_id}
                 onChange={(e) => handleFilterChange('course_id', e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-transparent"
+                className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none "
               >
                 <option value="">All Courses</option>
                 {courses.map(course => (
@@ -163,7 +163,7 @@ export default function AttendanceReportsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-[#1E88E5]">{stats.presentCount}</div>
+              <div className="text-2xl font-bold text-[#1B8A44]">{stats.presentCount}</div>
               <div className="text-sm text-[#64748B]">Present</div>
             </div>
           </CardContent>
@@ -205,7 +205,7 @@ export default function AttendanceReportsPage() {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="size-6 animate-spin text-[#1E88E5]" />
+              <Loader2 className="size-6 animate-spin text-[#1B8A44]" />
             </div>
           ) : attendanceData.length === 0 ? (
             <div className="text-center py-8">

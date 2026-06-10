@@ -87,7 +87,7 @@ export default function LoginPage() {
         <>
           Welcome to
           <br />
-          <span className="text-yellow-300">PlayFit LMS</span> <span className="text-2xl">🎓</span>
+          <span className="text-yellow-300">PlayFit</span> <span className="text-2xl">🎓</span>
         </>
       }
       leftSubtitle="Empowering administrators to oversee, manage, and deliver exceptional learning experiences."

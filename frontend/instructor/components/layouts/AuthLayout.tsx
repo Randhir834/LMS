@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           <Link href="/" className="inline-block">
             <img
               src="/images/navbarlogo.png"
-              alt="PlayFit LMS"
+              alt="PlayFit"
               className="h-12 w-auto mx-auto"
             />
           </Link>

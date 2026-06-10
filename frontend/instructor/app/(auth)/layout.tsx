@@ -9,7 +9,6 @@ export default function AuthGroupLayout({ children }: { children: React.ReactNod
   // Allow login/register/password pages to use their own layout
   if (
     pathname === '/login' ||
-    pathname === '/register' ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password'
   ) {

@@ -103,8 +103,14 @@ const updateUserById = async (id, { name, date_of_birth, school, grade, parent_g
   return user;
 };
 
-const updateUserPassword = async (id, hashedPassword) => {
+const updateUserPassword = async (id, hashedPassword, markAsChanged = false) => {
+  // Always update password, password_changed is already TRUE by default
   await query('UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2', [hashedPassword, id]);
 };
 
-module.exports = { findUserByEmail, findUserById, createUser, updateUserById, updateUserPassword };
+const getUserPasswordById = async (id) => {
+  const result = await query('SELECT password FROM users WHERE id = $1', [id]);
+  return result.rows[0]?.password || null;
+};
+
+module.exports = { findUserByEmail, findUserById, createUser, updateUserById, updateUserPassword, getUserPasswordById };

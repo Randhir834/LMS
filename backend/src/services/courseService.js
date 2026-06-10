@@ -192,7 +192,7 @@ const createNewCourse = async ({
     `INSERT INTO courses (title, description, price, thumbnail_url, category_id, status,
       duration_value, duration_unit, level, language, what_you_learn, requirements)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-    [title, description, price, thumbnail_url, category_id, status || 'draft',
+    [title, description, price, thumbnail_url, category_id, status || 'published',
      duration_value || 0, duration_unit || 'days', level || 'beginner', language || 'English',
      what_you_learn, requirements]
   );

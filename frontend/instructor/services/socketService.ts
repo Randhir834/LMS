@@ -75,6 +75,54 @@ class SocketService {
     }
   }
 
+  onCourseAssigned(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('course-assigned', callback);
+    }
+  }
+
+  offCourseAssigned(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('course-assigned', callback);
+      } else {
+        this.socket.off('course-assigned');
+      }
+    }
+  }
+
+  onCourseUpdated(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('course-updated', callback);
+    }
+  }
+
+  offCourseUpdated(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('course-updated', callback);
+      } else {
+        this.socket.off('course-updated');
+      }
+    }
+  }
+
+  onCourseDeleted(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('course-deleted', callback);
+    }
+  }
+
+  offCourseDeleted(callback?: (data: any) => void) {
+    if (this.socket) {
+      if (callback) {
+        this.socket.off('course-deleted', callback);
+      } else {
+        this.socket.off('course-deleted');
+      }
+    }
+  }
+
   getSocket() {
     return this.socket;
   }

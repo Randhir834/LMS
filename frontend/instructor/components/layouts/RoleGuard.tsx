@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function RoleGuard({
   children,
@@ -11,30 +12,34 @@ export default function RoleGuard({
   allowedRoles: Array<'admin' | 'instructor' | 'student'>;
 }) {
   const router = useRouter();
+  const { user, loading, isAuthenticated } = useAuth();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const rawUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
+    if (loading) return; // Wait for auth hook to finish loading
 
-    if (!rawUser || !token) {
+    if (!isAuthenticated || !user) {
       router.replace('/login');
       return;
     }
 
-    try {
-      const user = JSON.parse(rawUser) as { role?: string };
-      
-      if (!user?.role || !allowedRoles.includes(user.role as 'admin' | 'instructor' | 'student')) {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        router.replace('/login');
-      }
-    } catch {
+    if (!user.role || !allowedRoles.includes(user.role as 'admin' | 'instructor' | 'student')) {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       router.replace('/login');
+      return;
     }
-  }, [allowedRoles, router]);
+
+    setIsChecking(false);
+  }, [user, loading, isAuthenticated, allowedRoles, router]);
+
+  if (loading || isChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }
