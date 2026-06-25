@@ -8,7 +8,6 @@ import Button from '@/components/ui/Button';
 import { courseService } from '@/services/courseService';
 import { enrollmentService } from '@/services/enrollmentService';
 import { paymentService } from '@/services/paymentService';
-import CourseLiveClasses from '@/components/CourseLiveClasses';
 import type { Course } from '@/types';
 
 export default function CourseDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -96,7 +95,7 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
     return (
       <div className="p-4 md:p-8 max-w-[1200px] mx-auto">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-[#1B8A44]" />
+          <Loader2 className="size-8 animate-spin text-[#1E88E5]" />
         </div>
       </div>
     );
@@ -108,8 +107,8 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
         <Card>
           <CardContent>
             <div className="text-center py-8">
-              <BookOpen className="size-12 text-[#CBD5E1] mx-auto mb-3" />
-              <p className="text-sm text-[#64748B]">Course not found.</p>
+              <BookOpen className="size-12 text-[#E0E0E0] mx-auto mb-3" />
+              <p className="text-sm text-[#78909C]">Course not found.</p>
               <Link href="/student/courses" className="inline-block mt-4">
                 <Button variant="outline">Back to Courses</Button>
               </Link>
@@ -123,9 +122,9 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto space-y-6">
       {/* Course Header */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="space-y-6">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           {/* Course Info */}
           <Card>
             <CardContent className="p-6">
@@ -133,10 +132,10 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
                 {/* Title and Status */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h1 className="text-2xl md:text-3xl font-bold text-[#1E293B] mb-2">
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#1E3A5F] mb-2">
                       {course.title}
                     </h1>
-                    <div className="flex items-center gap-4 text-sm text-[#64748B]">
+                    <div className="flex items-center gap-4 text-sm text-[#78909C]">
                       <div className="flex items-center gap-1">
                         <Users className="size-4" />
                         <span>{instructorNames}</span>
@@ -158,12 +157,12 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
                     <span className={`px-3 py-1 text-sm font-medium rounded-full ${
                       course.level === 'beginner' ? 'bg-[#EFF6FF] text-[#1E40AF]' :
                       course.level === 'intermediate' ? 'bg-[#FEF3C7] text-[#D97706]' :
-                      'bg-[#FEE2E2] text-[#DC2626]'
+                      'bg-[#FEE2E2] text-[#EC407A]'
                     }`}>
                       {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
                     </span>
                     {enrolled && (
-                      <span className="px-3 py-1 text-sm font-medium bg-[#DCFCE7] text-[#1B8A44] rounded-full">
+                      <span className="px-3 py-1 text-sm font-medium bg-[#C5E1A5] text-[#1E88E5] rounded-full">
                         Enrolled
                       </span>
                     )}
@@ -172,14 +171,14 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
 
                 {/* Progress Bar for Enrolled Students */}
                 {enrolled && enrollmentData?.progress !== undefined && (
-                  <div className="bg-[#F8FAFC] p-4 rounded-lg">
+                  <div className="bg-[#FAFAFA] p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-[#1E293B]">Course Progress</span>
-                      <span className="text-sm text-[#64748B]">{Math.round(enrollmentData.progress)}%</span>
+                      <span className="text-sm font-medium text-[#1E3A5F]">Course Progress</span>
+                      <span className="text-sm text-[#78909C]">{Math.round(enrollmentData.progress)}%</span>
                     </div>
-                    <div className="w-full bg-[#E2E8F0] rounded-full h-3">
+                    <div className="w-full bg-[#E0E0E0] rounded-full h-3">
                       <div 
-                        className="bg-[#1B8A44] h-3 rounded-full transition-all duration-300"
+                        className="bg-[#1E88E5] h-3 rounded-full transition-all duration-300"
                         style={{ width: `${enrollmentData.progress}%` }}
                       />
                     </div>
@@ -189,20 +188,20 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
                 {/* Description */}
                 {course.description && (
                   <div>
-                    <h3 className="text-lg font-semibold text-[#1E293B] mb-2">About This Course</h3>
-                    <p className="text-[#64748B] leading-relaxed">{course.description}</p>
+                    <h3 className="text-lg font-semibold text-[#1E3A5F] mb-2">About This Course</h3>
+                    <p className="text-[#78909C] leading-relaxed">{course.description}</p>
                   </div>
                 )}
 
                 {/* What You'll Learn */}
                 {course.what_you_learn && (
                   <div>
-                    <h3 className="text-lg font-semibold text-[#1E293B] mb-3">What You'll Learn</h3>
+                    <h3 className="text-lg font-semibold text-[#1E3A5F] mb-3">What You'll Learn</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {course.what_you_learn.split('\n').filter(item => item.trim()).map((item, index) => (
                         <div key={index} className="flex items-start gap-2">
-                          <CheckCircle2 className="size-4 text-[#1B8A44] mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-[#64748B]">{item.trim()}</span>
+                          <CheckCircle2 className="size-4 text-[#1E88E5] mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-[#78909C]">{item.trim()}</span>
                         </div>
                       ))}
                     </div>
@@ -212,12 +211,12 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
                 {/* Requirements */}
                 {course.requirements && (
                   <div>
-                    <h3 className="text-lg font-semibold text-[#1E293B] mb-3">Requirements</h3>
+                    <h3 className="text-lg font-semibold text-[#1E3A5F] mb-3">Requirements</h3>
                     <div className="space-y-2">
                       {course.requirements.split('\n').filter(item => item.trim()).map((item, index) => (
                         <div key={index} className="flex items-start gap-2">
-                          <div className="size-2 bg-[#64748B] rounded-full mt-2 flex-shrink-0" />
-                          <span className="text-sm text-[#64748B]">{item.trim()}</span>
+                          <div className="size-2 bg-[#78909C] rounded-full mt-2 flex-shrink-0" />
+                          <span className="text-sm text-[#78909C]">{item.trim()}</span>
                         </div>
                       ))}
                     </div>
@@ -227,200 +226,152 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
             </CardContent>
           </Card>
 
-          {/* Course Content Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm text-[#64748B]">
-                  <span>{course.total_sections || 0} sections • {course.total_lessons || 0} lessons</span>
-                  <span>Total length: {course.duration_value} {course.duration_unit}</span>
-                </div>
-                
-                {/* Sample Content Structure */}
-                <div className="space-y-3">
-                  <div className="border border-[#E2E8F0] rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Video className="size-5 text-[#64748B]" />
-                        <div>
-                          <h4 className="font-medium text-[#1E293B]">Introduction</h4>
-                          <p className="text-sm text-[#64748B]">Get started with the basics</p>
-                        </div>
-                      </div>
-                      <span className="text-sm text-[#64748B]">5 min</span>
-                    </div>
-                  </div>
-                  
-                  <div className="border border-[#E2E8F0] rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <FileText className="size-5 text-[#64748B]" />
-                        <div>
-                          <h4 className="font-medium text-[#1E293B]">Course Materials</h4>
-                          <p className="text-sm text-[#64748B]">Downloadable resources</p>
-                        </div>
-                      </div>
-                      <span className="text-sm text-[#64748B]">PDF</span>
-                    </div>
-                  </div>
-                  
-                  {!enrolled && (
-                    <div className="text-center py-4 text-sm text-[#64748B]">
-                      <p>Enroll to see full course content</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Live Classes */}
-          {enrolled && <CourseLiveClasses courseId={courseId} />}
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Enrollment Card */}
+        {/* Enrollment/Payment Section */}
+        {!enrolled && (
           <Card>
             <CardContent className="p-6">
               <div className="space-y-4">
-                {/* Price */}
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-[#1E293B]">
-                    {course.price === 0 ? 'Free' : `₹${course.price.toLocaleString()}`}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-[#1E3A5F]">
+                      {formatPrice(course.price)}
+                    </h3>
+                    <p className="text-sm text-[#78909C] mt-1">One-time payment</p>
                   </div>
-                  {course.price > 0 && (
-                    <p className="text-sm text-[#64748B] mt-1">One-time payment</p>
-                  )}
-                </div>
-
-                {/* Enrollment Button */}
-                {enrolled ? (
-                  <Link href={`/student/course/${courseId}/learn`}>
-                    <Button className="w-full flex items-center gap-2">
-                      <Play className="size-4" />
-                      Continue Learning
-                    </Button>
-                  </Link>
-                ) : (
-                  <div className="space-y-3">
-                    {!showPayment ? (
-                      <Button 
-                        onClick={handleEnroll}
-                        disabled={enrollLoading}
-                        className="w-full flex items-center gap-2"
-                      >
-                        {enrollLoading ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : course.price === 0 ? (
-                          <>
-                            <BookOpen className="size-4" />
-                            Enroll for Free
-                          </>
-                        ) : (
-                          <>
-                            <CreditCard className="size-4" />
-                            Enroll Now
-                          </>
-                        )}
-                      </Button>
-                    ) : (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-2">
-                            Payment Method
-                          </label>
-                          <select
-                            value={paymentMethod}
-                            onChange={(e) => setPaymentMethod(e.target.value)}
-                            className="w-full px-3 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2"
-                          >
-                            <option value="credit_card">Credit Card</option>
-                            <option value="debit_card">Debit Card</option>
-                            <option value="upi">UPI</option>
-                            <option value="net_banking">Net Banking</option>
-                          </select>
-                        </div>
-                        
-                        <Button 
-                          onClick={handlePayment}
-                          disabled={enrollLoading}
-                          className="w-full flex items-center gap-2"
-                        >
-                          {enrollLoading ? (
-                            <Loader2 className="size-4 animate-spin" />
+                  
+                  {!showPayment ? (
+                    <Button
+                      onClick={handleEnroll}
+                      disabled={enrollLoading}
+                      className="px-8 py-3 bg-[#1E88E5] text-white font-semibold rounded-lg hover:bg-[#1565C0] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {enrollLoading ? (
+                        <>
+                          <Loader2 className="size-5 animate-spin mr-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          {course.price > 0 ? (
+                            <>
+                              <CreditCard className="size-5 mr-2" />
+                              Enroll Now
+                            </>
                           ) : (
                             <>
-                              <CreditCard className="size-4" />
-                              Pay ₹{course.price.toLocaleString()}
+                              <Play className="size-5 mr-2" />
+                              Enroll Free
                             </>
                           )}
-                        </Button>
-                        
-                        <Button 
-                          variant="outline"
-                          onClick={() => setShowPayment(false)}
-                          className="w-full"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    )}
+                        </>
+                      )}
+                    </Button>
+                  ) : null}
+                </div>
+
+                {showPayment && (
+                  <div className="space-y-4 pt-4 border-t border-[#E0E0E0]">
+                    <h4 className="font-semibold text-[#1E3A5F]">Select Payment Method</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-3 border border-[#E0E0E0] rounded-lg cursor-pointer hover:bg-[#FAFAFA]">
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="credit_card"
+                          checked={paymentMethod === 'credit_card'}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="w-4 h-4 text-[#1E88E5]"
+                        />
+                        <CreditCard className="size-5 text-[#78909C]" />
+                        <span className="text-sm text-[#1E3A5F]">Credit/Debit Card</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 border border-[#E0E0E0] rounded-lg cursor-pointer hover:bg-[#FAFAFA]">
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="upi"
+                          checked={paymentMethod === 'upi'}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="w-4 h-4 text-[#1E88E5]"
+                        />
+                        <span className="text-sm text-[#1E3A5F]">UPI</span>
+                      </label>
+                    </div>
+                    <Button
+                      onClick={handlePayment}
+                      disabled={enrollLoading}
+                      className="w-full px-6 py-3 bg-[#1E88E5] text-white font-semibold rounded-lg hover:bg-[#1565C0] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {enrollLoading ? (
+                        <>
+                          <Loader2 className="size-5 animate-spin mr-2" />
+                          Processing Payment...
+                        </>
+                      ) : (
+                        `Pay ${formatPrice(course.price)}`
+                      )}
+                    </Button>
                   </div>
                 )}
 
-                {/* Course Features */}
-                <div className="space-y-3 pt-4 border-t border-[#E2E8F0]">
-                  <div className="flex items-center gap-3 text-sm">
-                    <Clock className="size-4 text-[#64748B]" />
-                    <span className="text-[#64748B]">Self-paced learning</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Award className="size-4 text-[#64748B]" />
-                    <span className="text-[#64748B]">Certificate of completion</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Users className="size-4 text-[#64748B]" />
-                    <span className="text-[#64748B]">{course.enrollment_count || 0} students enrolled</span>
+                <div className="pt-4 border-t border-[#E0E0E0]">
+                  <h4 className="font-semibold text-[#1E3A5F] mb-3">This course includes:</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-[#78909C]">
+                      <CheckCircle2 className="size-4 text-[#1E88E5]" />
+                      <span>One-on-one mentoring sessions</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-[#78909C]">
+                      <CheckCircle2 className="size-4 text-[#1E88E5]" />
+                      <span>Flexible scheduling</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-[#78909C]">
+                      <CheckCircle2 className="size-4 text-[#1E88E5]" />
+                      <span>Course materials and resources</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-[#78909C]">
+                      <CheckCircle2 className="size-4 text-[#1E88E5]" />
+                      <span>Certificate of completion</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-[#78909C]">
+                      <CheckCircle2 className="size-4 text-[#1E88E5]" />
+                      <span>Lifetime access to course content</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
+        )}
 
-          {/* Instructor Info */}
-          {course.instructors && course.instructors.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Instructor{course.instructors.length > 1 ? 's' : ''}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {course.instructors.map((instructor) => (
-                    <div key={instructor.id} className="flex items-start gap-3">
-                      <div className="size-12 bg-[#1B8A44]/10 rounded-full flex items-center justify-center">
-                        <Users className="size-6 text-[#1B8A44]" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-[#1E293B]">{instructor.name}</h4>
-                        <p className="text-sm text-[#64748B]">{instructor.email}</p>
-                        {instructor.is_primary && (
-                          <span className="inline-block mt-1 px-2 py-1 text-xs bg-[#1B8A44]/10 text-[#1B8A44] rounded">
-                            Primary Instructor
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+        {enrolled && (
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-[#C5E1A5] rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="size-8 text-[#1E88E5]" />
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                <h3 className="text-xl font-bold text-[#1E3A5F]">You're Enrolled!</h3>
+                <p className="text-[#78909C] mb-4">
+                  Your instructor will schedule live classes for you. Check the Live Classes page for upcoming sessions.
+                </p>
+                <Link href="/student/live-classes">
+                  <Button className="px-6 py-2 bg-gradient-to-r from-[#1E88E5] to-[#42A5F5] text-white font-semibold rounded-lg hover:from-[#1565C0] hover:to-[#1E88E5] transition-all">
+                    <Video className="size-5 mr-2" />
+                    View Live Classes
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
+
+  function formatPrice(price: number) {
+    return price === 0 ? 'Free' : `₹${price.toLocaleString()}`;
+  }
 }

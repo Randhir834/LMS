@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from 'react-hot-toast';
+import NavigationLoaderProvider from "@/providers/NavigationLoaderProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,19 +15,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PlayFit",
-  description: "Learning Management System by PlayFit",
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
+  title: "Playfit - Online Courses for Kids | Art, Chess, Piano, Abacus & More",
+  description: "Live online skill development courses for children. Learn Art & Drawing, Chess, Piano, Phonics, Public Speaking, Abacus, Computers, Rubiks Cube and more with expert instructors.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Playfit',
   },
   icons: {
-    icon: "/images/navbarlogo.png",
-    shortcut: "/images/navbarlogo.png",
-    apple: "/images/navbarlogo.png",
+    icon: [
+      { url: '/favicon.png', sizes: '1254x1254', type: 'image/png' },
+      { url: '/images/playfit-logo.jpg', sizes: '1254x1254', type: 'image/png' }
+    ],
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+  themeColor: '#1E88E5',
 };
 
 export default function RootLayout({
@@ -38,7 +51,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <NavigationLoaderProvider />
+        {children}
+        <Toaster position="top-right" />
+      </body>
     </html>
   );
 }

@@ -10,6 +10,7 @@ const cors = require('cors');
 const path = require('path');
 const { corsOptions } = require('./config/cors');
 const { errorHandler } = require('./middleware/errorHandler');
+const { errorTranslator } = require('./middleware/errorTranslator');
 const { requestLogger } = require('./middleware/requestLogger');
 const { authenticate } = require('./middleware/auth');
 const { pool } = require('./config/database');
@@ -55,9 +56,14 @@ if (process.env.TRUST_PROXY === 'true') {
   app.set('trust proxy', 1);
 }
 
+// Enable CORS before any other middleware
 app.use(cors(corsOptions));
-app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: process.env.URLENCODED_LIMIT || '1mb' }));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: process.env.URLENCODED_LIMIT || '10mb' }));
 app.use(requestLogger);
 
 // Serve uploaded files publicly (no authentication required for images)
@@ -83,9 +89,13 @@ app.get('/health', (req, res) => {
 });
 
 app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
+  res.status(404).json({ error: 'The page you are looking for does not exist.' });
 });
 
+// Error translation middleware (converts technical errors to user-friendly messages)
+app.use(errorTranslator);
+
+// Error handler (sends the response)
 app.use(errorHandler);
 
 const PORT = Number(process.env.PORT || 5001);

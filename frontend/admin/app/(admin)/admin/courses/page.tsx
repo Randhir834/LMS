@@ -107,8 +107,7 @@ function CoursesContent() {
 
   const stats = {
     total: courses.length,
-    published: courses.filter(c => c.status === 'published').length,
-    archived: courses.filter(c => c.status === 'archived').length
+    published: courses.filter(c => c.status === 'published').length
   };
 
   return (
@@ -133,7 +132,7 @@ function CoursesContent() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
@@ -145,16 +144,8 @@ function CoursesContent() {
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-[#1B8A44]">{stats.published}</div>
+              <div className="text-2xl font-bold text-[#1E88E5]">{stats.published}</div>
               <div className="text-sm text-[#64748B]">Published</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[#64748B]">{stats.archived}</div>
-              <div className="text-sm text-[#64748B]">Archived</div>
             </div>
           </CardContent>
         </Card>
@@ -163,7 +154,7 @@ function CoursesContent() {
       {/* Course Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-[#1B8A44]" />
+          <Loader2 className="size-8 animate-spin text-[#1E88E5]" />
         </div>
       ) : courses.length === 0 ? (
         <Card>
@@ -171,20 +162,12 @@ function CoursesContent() {
             <div className="text-center py-12">
               <BookOpen className="size-12 text-[#CBD5E1] mx-auto mb-4" />
               <h3 className="text-lg font-medium text-[#1E293B] mb-2">No courses found</h3>
-              <p className="text-sm text-[#64748B] mb-6">
+              <p className="text-sm text-[#64748B]">
                 {filters.search || Object.values(filters).some(v => v && v !== 'created_at' && v !== 'desc')
                   ? 'Try adjusting your filters or search terms.'
                   : 'Get started by creating your first course.'
                 }
               </p>
-              {!filters.search && !Object.values(filters).some(v => v && v !== 'created_at' && v !== 'desc') && (
-                <Link href="/admin/courses/create">
-                  <Button className="flex items-center gap-2">
-                    <PlusCircle className="size-4" />
-                    Create First Course
-                  </Button>
-                </Link>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -212,7 +195,7 @@ export default function AdminCoursesPage() {
     <Suspense fallback={
       <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-[#1B8A44]" />
+          <Loader2 className="size-8 animate-spin text-[#1E88E5]" />
         </div>
       </div>
     }>

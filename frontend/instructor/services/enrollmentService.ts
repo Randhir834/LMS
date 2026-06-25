@@ -1,52 +1,57 @@
 import api from './api';
 
-export interface CourseEnrollment {
-  id: number;
-  user_id: number;
-  course_id: number;
-  status: 'active' | 'completed' | 'cancelled';
-  progress: number;
-  enrolled_at: string;
-  completed_at?: string;
-  student_name: string;
-  student_email: string;
-  student_phone?: string;
-  date_of_birth?: string;
-  grade?: string;
-  completed_lessons: number;
-  total_lessons: number;
-}
-
-export interface EnrollmentStats {
-  total_students: number;
-  active_students: number;
-  completed_students: number;
-  students_completed_course: number;
-  average_progress: number;
-  new_enrollments_week: number;
-  new_enrollments_month: number;
-}
-
 export const enrollmentService = {
-  getCourseEnrollments: async (courseId: number, filters?: {
-    status?: string;
-    search?: string;
-    sort_by?: string;
-    sort_order?: string;
-  }) => {
-    const params = new URLSearchParams();
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value);
-      });
-    }
-    const query = params.toString() ? `?${params.toString()}` : '';
-    const response = await api.get(`/enrollments/course/${courseId}${query}`);
+  enrollCourse: async (courseId: number) => {
+    const response = await api.post('/enrollments', { course_id: courseId });
+    return response.data;
+  },
+
+  getEnrollments: async () => {
+    const response = await api.get('/enrollments');
+    return response.data;
+  },
+
+  getEnrollmentById: async (id: number) => {
+    const response = await api.get(`/enrollments/${id}`);
+    return response.data;
+  },
+
+  checkEnrollment: async (courseId: number) => {
+    const response = await api.get(`/enrollments/check/${courseId}`);
     return response.data;
   },
 
   getCourseEnrollments: async (courseId: number, filters?: { status?: string; search?: string; sort_by?: string; sort_order?: string }) => {
     const response = await api.get(`/enrollments/course/${courseId}`, { params: filters });
+    return response.data;
+  },
+
+  getInstructorStudents: async (filters?: { search?: string; sort_by?: string; sort_order?: string; course_id?: number }) => {
+    const response = await api.get('/enrollments/instructor/students', { params: filters });
+    return response.data;
+  },
+
+  getStudentSlots: async (studentId: number) => {
+    const response = await api.get(`/enrollments/instructor/students/${studentId}/slots`);
+    return response.data;
+  },
+
+  cancelStudentSlot: async (studentId: number, registrationId: number) => {
+    const response = await api.delete(`/enrollments/instructor/students/${studentId}/slots/${registrationId}`);
+    return response.data;
+  },
+
+  // Get student's enrolled courses for an instructor
+  getStudentEnrolledCourses: async (studentId: number) => {
+    const response = await api.get(`/enrollments/instructor/students/${studentId}/courses`);
+    return response.data;
+  },
+
+  // Update manual completed lessons for an enrollment
+  updateCompletedLessons: async (enrollmentId: number, completedLessons: number) => {
+    const response = await api.patch(`/enrollments/instructor/enrollments/${enrollmentId}/completed-lessons`, {
+      completed_lessons: completedLessons
+    });
     return response.data;
   },
 };

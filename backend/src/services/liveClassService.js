@@ -13,17 +13,22 @@ const findLiveClassesByCourse = async (courseId) => {
 };
 
 const findUpcomingLiveClasses = async (studentId) => {
-  const result = await query(
-    `SELECT lc.*, c.title AS course_title, c.thumbnail_url, u.name AS instructor_name
-     FROM live_classes lc
-     JOIN enrollments e ON lc.course_id = e.course_id
-     JOIN courses c ON lc.course_id = c.id
-     LEFT JOIN users u ON lc.created_by = u.id
-     WHERE e.user_id = $1 AND lc.scheduled_at > NOW() AND lc.status = 'scheduled'
-     ORDER BY lc.scheduled_at ASC`,
-    [studentId]
-  );
-  return result.rows;
+  try {
+    const result = await query(
+      `SELECT lc.*, c.title AS course_title, c.thumbnail_url, u.name AS instructor_name
+       FROM live_classes lc
+       JOIN enrollments e ON lc.course_id = e.course_id
+       JOIN courses c ON lc.course_id = c.id
+       LEFT JOIN users u ON lc.created_by = u.id
+       WHERE e.user_id = $1 AND lc.scheduled_at > NOW() AND lc.status = 'scheduled'
+       ORDER BY lc.scheduled_at ASC`,
+      [studentId]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error('[findUpcomingLiveClasses] Database error:', error.message);
+    throw error;
+  }
 };
 
 const findLiveClassById = async (id) => {
@@ -41,7 +46,7 @@ const findLiveClassesByInstructor = async (instructorId, filters = {}) => {
   const { status, course_id, search } = filters;
   
   let sql = `
-    SELECT lc.*, c.title AS course_title, u.name AS created_by_name
+    SELECT lc.*, c.title AS course_title, c.thumbnail_url, u.name AS created_by_name
     FROM live_classes lc
     JOIN courses c ON lc.course_id = c.id
     JOIN course_instructors ci ON c.id = ci.course_id
@@ -77,11 +82,25 @@ const findLiveClassesByInstructor = async (instructorId, filters = {}) => {
 };
 
 const createLiveClass = async ({ course_id, lesson_id, section_id, title, description, meet_link, scheduled_at, duration_minutes, created_by }) => {
+  // If no meet_link is provided, fetch the course's default Google Meet link
+  let finalMeetLink = meet_link;
+  
+  if (!finalMeetLink) {
+    const courseResult = await query(
+      'SELECT google_meet_link FROM courses WHERE id = $1',
+      [course_id]
+    );
+    
+    if (courseResult.rows[0]?.google_meet_link) {
+      finalMeetLink = courseResult.rows[0].google_meet_link;
+    }
+  }
+  
   const result = await query(
     `INSERT INTO live_classes (course_id, lesson_id, section_id, title, description, meet_link, scheduled_at, duration_minutes, created_by) 
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
      RETURNING *`,
-    [course_id, lesson_id, section_id, title, description, meet_link, scheduled_at, duration_minutes, created_by]
+    [course_id, lesson_id, section_id, title, description, finalMeetLink, scheduled_at, duration_minutes, created_by]
   );
   return result.rows[0];
 };
@@ -157,39 +176,105 @@ const findCoursesWithLiveClassesByInstructor = async (instructorId) => {
 
 // Get enrolled courses with their live classes for students
 const findCoursesWithLiveClassesByStudent = async (studentId) => {
-  const result = await query(
-    `SELECT 
-      c.id AS course_id,
-      c.title AS course_title,
-      c.description AS course_description,
-      c.thumbnail_url,
-      e.progress,
-      e.status AS enrollment_status,
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'id', lc.id,
-            'title', lc.title,
-            'description', lc.description,
-            'meet_link', lc.meet_link,
-            'scheduled_at', lc.scheduled_at,
-            'duration_minutes', lc.duration_minutes,
-            'status', lc.status,
-            'instructor_name', u.name,
-            'created_at', lc.created_at
-          ) ORDER BY lc.scheduled_at ASC
-        ) FILTER (WHERE lc.id IS NOT NULL AND lc.scheduled_at > NOW()),
-        '[]'
-      ) AS live_classes
-    FROM enrollments e
-    INNER JOIN courses c ON e.course_id = c.id
-    LEFT JOIN live_classes lc ON lc.course_id = c.id
+  try {
+    const result = await query(
+      `SELECT 
+        c.id AS course_id,
+        c.title AS course_title,
+        c.description AS course_description,
+        c.thumbnail_url,
+        e.progress,
+        e.status AS enrollment_status,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', lc.id,
+              'title', lc.title,
+              'description', lc.description,
+              'meet_link', lc.meet_link,
+              'scheduled_at', lc.scheduled_at,
+              'duration_minutes', lc.duration_minutes,
+              'status', lc.status,
+              'instructor_name', u.name,
+              'created_at', lc.created_at
+            ) ORDER BY lc.scheduled_at ASC
+          ) FILTER (WHERE lc.id IS NOT NULL AND lc.scheduled_at > NOW()),
+          '[]'
+        ) AS live_classes
+      FROM enrollments e
+      INNER JOIN courses c ON e.course_id = c.id
+      LEFT JOIN live_classes lc ON lc.course_id = c.id
+      LEFT JOIN users u ON lc.created_by = u.id
+      WHERE e.user_id = $1 AND e.status = 'active'
+      GROUP BY c.id, e.progress, e.status
+      ORDER BY c.title ASC`,
+      [studentId]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error('[findCoursesWithLiveClassesByStudent] Database error:', error.message);
+    throw error;
+  }
+};
+
+// Get all live classes for admin with optional filters
+const findAllLiveClassesForAdmin = async (filters = {}) => {
+  const { status, instructor_id, course_id, search, date_from, date_to } = filters;
+  
+  let sql = `
+    SELECT lc.*, 
+           c.title AS course_title, 
+           c.thumbnail_url, 
+           u.name AS instructor_name,
+           u.id AS instructor_id
+    FROM live_classes lc
+    JOIN courses c ON lc.course_id = c.id
     LEFT JOIN users u ON lc.created_by = u.id
-    WHERE e.user_id = $1 AND e.status = 'active'
-    GROUP BY c.id, e.progress, e.status
-    ORDER BY c.title ASC`,
-    [studentId]
-  );
+    WHERE 1=1
+  `;
+  
+  const params = [];
+  let paramIdx = 1;
+
+  if (status) {
+    sql += ` AND lc.status = $${paramIdx}`;
+    params.push(status);
+    paramIdx++;
+  }
+
+  if (instructor_id) {
+    sql += ` AND lc.created_by = $${paramIdx}`;
+    params.push(instructor_id);
+    paramIdx++;
+  }
+
+  if (course_id) {
+    sql += ` AND lc.course_id = $${paramIdx}`;
+    params.push(course_id);
+    paramIdx++;
+  }
+
+  if (search) {
+    sql += ` AND (LOWER(lc.title) LIKE $${paramIdx} OR LOWER(c.title) LIKE $${paramIdx} OR LOWER(u.name) LIKE $${paramIdx})`;
+    params.push(`%${search.toLowerCase()}%`);
+    paramIdx++;
+  }
+
+  if (date_from) {
+    sql += ` AND lc.scheduled_at >= $${paramIdx}`;
+    params.push(date_from);
+    paramIdx++;
+  }
+
+  if (date_to) {
+    sql += ` AND lc.scheduled_at <= $${paramIdx}`;
+    params.push(date_to);
+    paramIdx++;
+  }
+
+  sql += ` ORDER BY lc.scheduled_at DESC`;
+
+  const result = await query(sql, params);
   return result.rows;
 };
 
@@ -203,4 +288,5 @@ module.exports = {
   deleteLiveClassById,
   findCoursesWithLiveClassesByInstructor,
   findCoursesWithLiveClassesByStudent,
+  findAllLiveClassesForAdmin,
 };

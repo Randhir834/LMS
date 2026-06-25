@@ -7,43 +7,77 @@ interface User {
   name: string;
   email: string;
   role: string;
-  password_changed?: boolean;
 }
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('token');
-    if (storedUser) {
+    const token = localStorage.getItem('token');
+    
+    if (storedUser && token) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        // Set auth session if user is already logged in
+        sessionStorage.setItem('auth_session', 'active');
       } catch {
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('sessionToken');
+        sessionStorage.removeItem('auth_session');
       }
-    }
-    if (storedToken) {
-      setToken(storedToken);
     }
     setLoading(false);
   }, []);
 
-  const login = useCallback((userData: User, tokenValue: string) => {
-    localStorage.setItem('token', tokenValue);
+  const login = useCallback((userData: User, token: string, sessionToken?: string) => {
+    localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
+    if (sessionToken) {
+      localStorage.setItem('sessionToken', sessionToken);
+    }
+    // Set auth session to prevent redirect loops
+    sessionStorage.setItem('auth_session', 'active');
     setUser(userData);
-    setToken(tokenValue);
   }, []);
 
   const logout = useCallback(() => {
+    // Clear all authentication data from localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('sessionToken');
+    
+    // Clear all authentication data from sessionStorage
+    sessionStorage.removeItem('auth_session');
+    sessionStorage.removeItem('page_loaded');
+    
+    // Set logout flag to prevent bfcache access
+    sessionStorage.setItem('logout_initiated', 'true');
+    
+    // Clear state
     setUser(null);
-    setToken(null);
+    
+    // Clear any cached data
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      caches.keys().then((names) => {
+        names.forEach((name) => {
+          caches.delete(name);
+        });
+      });
+    }
   }, []);
 
-  return { user, token, loading, login, logout, isAuthenticated: !!user };
+  const updateUser = useCallback((userData: Partial<User>) => {
+    const currentUser = user;
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...userData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+  }, [user]);
+
+  return { user, loading, login, logout, updateUser, isAuthenticated: !!user };
 }

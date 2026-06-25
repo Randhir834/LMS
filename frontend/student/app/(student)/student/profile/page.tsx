@@ -1,78 +1,64 @@
-"use client";
-import { useState, useEffect } from 'react';
-import { 
-  User, Mail, Phone, MapPin, Calendar, BookOpen, Video, 
-  ClipboardList, Award, ChevronRight, Camera, Bell, 
-  Shield, Settings, HelpCircle, LogOut, Loader2, Star, Target, Trophy, Trash2, Save
-} from 'lucide-react';
-import StudentDashboardLayout from '@/components/layouts/StudentDashboardLayout';
-import { useRouter } from 'next/navigation';
-import { userService, UserProfile } from '@/services/userService';
-import { dashboardService, DashboardData } from '@/services/dashboardService';
+'use client';
 
-function formatDateOfBirth(date?: string) {
-  if (!date) return 'N/A';
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return 'N/A';
-  return parsed.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+import { useState, useEffect } from 'react';
+import {
+  Mail, Phone, MapPin, Calendar, BookOpen,
+  Camera, Loader2, Save,
+  Heart, School, Trash2
+} from 'lucide-react';
+import { userService, UserProfile } from '@/services/userService';
+import { enrollmentService } from '@/services/enrollmentService';
+import { getAvatarUrl } from '@/utils/avatarUtils';
+
+interface StudentDashboardData {
+  stats: {
+    coursesEnrolled: number;
+    totalStudents: number;
+  };
 }
 
-export default function ProfilePage() {
+export default function StudentProfilePage() {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [dashboardData, setDashboardData] = useState<StudentDashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  // Removed unused password modal state
-  const router = useRouter();
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-const handleLogout = async () => {
-  try {
-    await userService.logout();
-  } catch (err) {
-    console.error('Logout error', err);
-  } finally {
-    router.push('/student/login');
-  }
-};
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  
-
-  // Form states
   const [formData, setFormData] = useState({
     name: '',
-    dob: 'N/A',
-    grade: 'N/A',
-    school: 'N/A',
-    parentName: 'N/A',
-    phone: 'N/A',
-    location: 'N/A'
+    phone: '',
+    location: '',
+    school: '',
+    grade: ''
   });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profile, dashData] = await Promise.all([
-          userService.getProfile(),
-          dashboardService.getDashboardData()
-        ]);
-        setProfile(profile);
-        setDashboardData(dashData);
-        setFormData(prev => ({
-          ...prev,
-          name: profile.name,
-          dob: formatDateOfBirth(profile.date_of_birth),
-          grade: profile.grade || 'N/A',
-          school: profile.school || 'N/A',
-          parentName: profile.parent_guardian_name || 'N/A',
-          phone: profile.phone || 'N/A',
-          location: profile.location || 'N/A'
-        }));
+        const profile = await userService.getProfile();
+        setUser(profile);
+        setFormData({
+          name: profile.name || '',
+          phone: profile.phone || '',
+          location: profile.location || '',
+          school: profile.school || '',
+          grade: profile.grade || ''
+        });
+
+        const enrollmentData = await enrollmentService.getEnrollments();
+        const courses = enrollmentData.enrollments || [];
+
+        setDashboardData({
+          stats: {
+            coursesEnrolled: courses.length,
+            totalStudents: 0,
+          }
+        });
       } catch (err) {
         console.error('Failed to load profile data:', err);
+        setMessage('Failed to load profile data. Please refresh the page.');
       } finally {
         setLoading(false);
       }
@@ -81,350 +67,370 @@ const handleLogout = async () => {
   }, []);
 
   const handleUpdateProfile = async () => {
-    if (!formData.name.trim()) return;
+    if (!formData.name.trim()) {
+      setMessage('Name is required.');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+    
     setSaving(true);
     try {
       const updatedUser = await userService.updateProfile({
-        name: formData.name,
-        school: formData.school === 'N/A' ? undefined : formData.school,
-        grade: formData.grade === 'N/A' ? undefined : formData.grade,
-        parent_guardian_name: formData.parentName === 'N/A' ? undefined : formData.parentName,
-        phone: formData.phone === 'N/A' ? undefined : formData.phone,
-        location: formData.location === 'N/A' ? undefined : formData.location
+        name: formData.name.trim(),
+        phone: formData.phone.trim() || undefined,
+        location: formData.location.trim() || undefined,
+        school: formData.school.trim() || undefined,
+        grade: formData.grade.trim() || undefined
       });
-      setProfile(updatedUser);
-      setFormData(prev => ({
-        ...prev,
-        name: updatedUser.name,
-        grade: updatedUser.grade || 'N/A',
-        school: updatedUser.school || 'N/A',
-        parentName: updatedUser.parent_guardian_name || 'N/A',
-        phone: updatedUser.phone || 'N/A',
-        location: updatedUser.location || 'N/A'
-      }));
+      setUser(updatedUser);
+      setFormData({
+        name: updatedUser.name || '',
+        phone: updatedUser.phone || '',
+        location: updatedUser.location || '',
+        school: updatedUser.school || '',
+        grade: updatedUser.grade || ''
+      });
       setMessage('Profile updated successfully!');
       setTimeout(() => setMessage(''), 3000);
-    } catch (err) {
-      setMessage('Failed to update profile.');
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.error || 'Failed to update profile.';
+      setMessage(errorMsg);
       setTimeout(() => setMessage(''), 3000);
     } finally {
       setSaving(false);
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setMessage('Please select an image file.');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage('File size must be less than 5MB.');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const result = await userService.uploadProfilePhoto(file);
+      setUser(result.user);
+      
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('profilePhotoUpdated', { 
+          detail: { user: result.user } 
+        }));
+      }
+      
+      setMessage('Profile photo updated successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.error || 'Failed to upload profile photo.';
+      setMessage(errorMsg);
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setUploadingPhoto(false);
+      // Reset input to allow uploading the same file again
+      e.target.value = '';
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!user?.avatar_url) return;
+    
+    setUploadingPhoto(true);
+    try {
+      const result = await userService.deleteProfilePhoto();
+      setUser(result.user);
+      
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('profilePhotoUpdated', { 
+          detail: { user: result.user } 
+        }));
+      }
+      
+      setMessage('Profile photo removed successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.error || 'Failed to remove profile photo.';
+      setMessage(errorMsg);
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   if (loading) {
     return (
-      <StudentDashboardLayout>
-        <div className="flex-1 flex items-center justify-center h-[calc(100vh-73px)]">
-          <div className="text-center">
-            <Loader2 className="size-8 animate-spin text-[#1B8A44] mx-auto mb-4" />
-            <p className="text-[#64748B]">Loading profile...</p>
-          </div>
+      <div className="flex-1 flex items-center justify-center min-h-[calc(100vh-73px)]">
+        <div className="text-center">
+          <Loader2 className="size-8 animate-spin text-[#1E88E5] mx-auto mb-4" />
+          <p className="text-[#78909C]">Loading profile...</p>
         </div>
-      </StudentDashboardLayout>
+      </div>
     );
   }
 
-  const displayName = profile?.name || 'Student';
-  const role = profile?.role || 'student';
-  const email = profile?.email || '';
-  const joinDate = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
-
-  const stats = [
-    { label: 'Enrolled Courses', value: dashboardData?.stats.enrolledCourses || 0, icon: BookOpen, color: 'text-[#1B8A44]', bg: 'bg-[#DCFCE7]' },
-    { label: 'Live Classes Attended', value: dashboardData?.stats.liveClasses || 0, icon: Video, color: 'text-[#D97706]', bg: 'bg-[#FEF3C7]' },
-    { label: 'Assignments Completed', value: dashboardData?.stats.assignments || 0, icon: ClipboardList, color: 'text-[#2563EB]', bg: 'bg-[#DBEAFE]' },
-    { label: 'Certificates Earned', value: 0, icon: Award, color: 'text-[#9333EA]', bg: 'bg-[#F3E8FF]' },
-  ];
-
-  const courses = dashboardData?.courses || [];
+  const displayName = user?.name || 'Student';
+  const role = user?.role || 'student';
+  const email = user?.email || '';
+  const joinDate = user?.created_at 
+    ? new Date(user.created_at).toLocaleDateString('en-US', { 
+        day: 'numeric', 
+        month: 'short', 
+        year: 'numeric' 
+      }) 
+    : 'N/A';
+  const age = user?.date_of_birth 
+    ? Math.floor((new Date().getTime() - new Date(user.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
+    : null;
 
   return (
-    <StudentDashboardLayout>
-      <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
-        <div className="mb-6">
-          <h2 className="text-[#64748B] text-sm mb-4">Manage your personal information and account settings</h2>
-          
-          {message && (
-            <div className={`mb-4 p-3 rounded-lg text-sm font-medium ${message.includes('successfully') ? 'bg-[#DCFCE7] text-[#166534]' : 'bg-[#FEE2E2] text-[#DC2626]'} animate-in fade-in slide-in-from-top-4`}>
-              {message}
-            </div>
-          )}
-
+    <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">
+      {message && (
+        <div className={`mb-6 p-4 rounded-xl text-sm font-medium ${message.includes('successfully') ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#FFEBEE] text-[#C62828]'} animate-in fade-in slide-in-from-top-4 shadow-sm`}>
+          {message}
         </div>
+      )}
 
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
-          {/* Main Content Area */}
-          <div className="col-span-12 lg:col-span-8 space-y-4 md:space-y-6">
-            {/* Profile Header Card */}
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 md:p-8">
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 text-center md:text-left">
-                <div className="relative">
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#F0FDF4]">
-                    <img 
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1B8A44&color=fff&size=256`} 
-                      alt={displayName}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <button className="absolute bottom-1 right-1 w-8 h-8 bg-white border border-[#E2E8F0] rounded-full flex items-center justify-center text-[#64748B] hover:text-[#1B8A44] shadow-sm transition-colors">
-                    <Camera size={16} />
+        <div className="space-y-6">
+          {/* Profile Header Card */}
+          <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-sm p-6 md:p-8">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
+              <div className="relative shrink-0">
+                <div className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-[#E3F2FD] shadow-md">
+                  <img 
+                    src={getAvatarUrl(user?.avatar_url, displayName)} 
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={uploadingPhoto}
+                  className="hidden"
+                  id="photo-upload"
+                />
+                <button 
+                  onClick={() => document.getElementById('photo-upload')?.click()}
+                  disabled={uploadingPhoto}
+                  className="absolute bottom-0 right-0 w-10 h-10 bg-[#1E88E5] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-[#1565C0] shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Upload photo"
+                >
+                  {uploadingPhoto ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+                </button>
+                {user?.avatar_url && (
+                  <button
+                    onClick={handleDeletePhoto}
+                    disabled={uploadingPhoto}
+                    className="absolute top-0 right-0 w-8 h-8 bg-[#EC407A] border-2 border-white rounded-full flex items-center justify-center text-white hover:bg-[#D81B60] shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Remove photo"
+                  >
+                    <Trash2 size={14} />
                   </button>
-                </div>
-
-                <div className="flex-1 w-full">
-                  <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-                    <div className="flex flex-col md:flex-row items-center gap-3">
-                      <input 
-                        type="text"
-                        value={formData.name}
-                        disabled={!isEditingProfile}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        className={`text-xl md:text-2xl font-bold text-[#1E293B] bg-transparent border-none focus:ring-0 p-0 w-full md:w-auto text-center md:text-left ${isEditingProfile ? 'border-b border-gray-300' : ''}`}
-                      />
-                      <span className="px-3 py-0.5 bg-[#DCFCE7] text-[#1B8A44] text-xs font-semibold rounded-md capitalize">
-                        {role}
-                      </span>
-                    </div>
-                    {isEditingProfile ? (
-                      <button 
-                        onClick={handleUpdateProfile}
-                        disabled={saving}
-                        className="w-full md:w-auto px-4 py-2 bg-[#1B8A44] text-white text-sm font-medium rounded-lg hover:bg-[#166534] transition-colors flex items-center justify-center gap-2"
-                      >
-                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        Save Changes
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 md:gap-x-12">
-                    <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-12">
-                      <div className="flex items-center gap-2 w-28 sm:w-32">
-                        <Calendar size={16} className="text-[#94A3B8] shrink-0" />
-                        <span className="text-sm text-[#64748B]">Date of Birth</span>
-                      </div>
-                      {isEditingProfile ? (
-                        <input
-                          type="text"
-                          value={formData.dob}
-                          onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                          className="text-sm font-medium text-[#1E293B] bg-transparent border-b border-gray-300 outline-none"
-                        />
-                      ) : (
-                        <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{formData.dob}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-12">
-                      <div className="flex items-center gap-2 w-28 sm:w-32">
-                        <Award size={16} className="text-[#94A3B8] shrink-0" />
-                        <span className="text-sm text-[#64748B]">Grade</span>
-                      </div>
-                      {isEditingProfile ? (
-                        <input
-                          type="text"
-                          value={formData.grade}
-                          onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                          className="text-sm font-medium text-[#1E293B] bg-transparent border-b border-gray-300 outline-none"
-                        />
-                      ) : (
-                        <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{formData.grade}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-12">
-                      <div className="flex items-center gap-2 w-28 sm:w-32">
-                        <BookOpen size={16} className="text-[#94A3B8] shrink-0" />
-                        <span className="text-sm text-[#64748B]">School</span>
-                      </div>
-                      {isEditingProfile ? (
-                        <input
-                          type="text"
-                          value={formData.school}
-                          onChange={(e) => setFormData({ ...formData, school: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-[#CBD5E1] text-sm text-[#1E293B] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1B8A44]/20 focus:border-[#1B8A44] disabled:opacity-60 truncate max-w-[120px] sm:max-w-[150px]"
-                        />
-                      ) : (
-                        <span className="text-sm font-medium text-[#1E293B] truncate max-w-[120px] sm:max-w-[150px] whitespace-nowrap">{formData.school}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-12">
-                      <div className="flex items-center gap-2 w-28 sm:w-32">
-                        <User size={16} className="text-[#94A3B8] shrink-0" />
-                        <span className="text-sm text-[#64748B]">Parent/Guardian</span>
-                      </div>
-                      {isEditingProfile ? (
-                        <input
-                          type="text"
-                          value={formData.parentName}
-                          onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                          className="text-sm font-medium text-[#1E293B] bg-transparent border-b border-gray-300 outline-none"
-                        />
-                      ) : (
-                        <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{formData.parentName}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-12">
-                      <div className="flex items-center gap-2 w-28 sm:w-32">
-                        <Calendar size={16} className="text-[#94A3B8] shrink-0" />
-                        <span className="text-sm text-[#64748B]">Member Since</span>
-                      </div>
-                      <span className="text-sm font-medium text-[#1E293B] whitespace-nowrap">{joinDate}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-              {stats.map((stat, i) => (
-                <div key={i} className="bg-white rounded-xl border border-[#E2E8F0] p-4 md:p-5">
-                  <div className="flex items-center gap-3 md:gap-4 mb-3">
-                    <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.bg} rounded-full flex items-center justify-center`}>
-                      <stat.icon size={16} className={stat.color} />
-                    </div>
-                    <span className="text-lg md:text-xl font-bold text-[#1E293B]">{stat.value}</span>
-                  </div>
-                  <p className="text-[10px] md:text-xs text-[#64748B] mb-2">{stat.label}</p>
-
-                </div>
-              ))}
-            </div>
-
-            {/* Recently Enrolled Courses */}
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 md:p-6">
-              <div className="flex items-center justify-between mb-6">
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
-                {courses.length > 0 ? courses.slice(0, 4).map((course, i) => (
-                  <div key={i} className="space-y-3">
-                    <div className="aspect-[16/9] sm:aspect-[4/3] bg-[#F8FAFC] rounded-xl overflow-hidden relative flex items-center justify-center">
-                      <div className="text-3xl font-bold text-[#1B8A44]">{course.title[0]}</div>
-                    </div>
-                    <div className="px-1">
-                      <h4 className="text-sm font-semibold text-[#1E293B] mb-2 line-clamp-1">{course.title}</h4>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-bold text-[#1B8A44]">{course.progress}% Complete</span>
-                      </div>
-                      <div className="w-full bg-[#F1F5F9] rounded-full h-1.5 mb-3">
-                        <div className="bg-[#1B8A44] h-1.5 rounded-full" style={{ width: `${course.progress}%` }}></div>
-                      </div>
-                      <button className="w-full py-2 bg-[#F0FDF4] text-[#1B8A44] text-[11px] font-bold rounded-lg border border-[#DCFCE7] hover:bg-[#DCFCE7] transition-colors">
-                        Continue Learning
-                      </button>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="col-span-full py-8 text-center text-[#64748B]">No courses enrolled yet</div>
                 )}
+              </div>
+
+              <div className="flex-1 w-full">
+                <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+                  <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+                    <input 
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      disabled={saving}
+                      className="text-2xl md:text-3xl font-bold text-[#1E3A5F] bg-transparent border-b-2 border-transparent hover:border-[#E0E0E0] focus:border-[#1E88E5] focus:outline-none px-2 py-1 w-full md:w-auto text-center md:text-left transition-colors disabled:cursor-not-allowed"
+                      placeholder="Your Name"
+                    />
+                    <span className="px-3 py-1 bg-gradient-to-r from-[#1E88E5] to-[#1565C0] text-white text-xs font-semibold rounded-full capitalize shadow-sm">
+                      {role}
+                    </span>
+                  </div>
+                  {formData.name !== user?.name && (
+                    <button 
+                      onClick={handleUpdateProfile}
+                      disabled={saving || !formData.name.trim()}
+                      className="w-full md:w-auto px-6 py-2.5 bg-[#1E88E5] text-white text-sm font-medium rounded-lg hover:bg-[#1565C0] transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                      Save Changes
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                  <div className="flex items-center gap-3 p-3 bg-[#FAFAFA] rounded-xl">
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                      <Calendar size={18} className="text-[#1E88E5]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-[#78909C] mb-0.5">Member Since</p>
+                      <p className="text-sm font-semibold text-[#1E3A5F] truncate">{joinDate}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-[#FAFAFA] rounded-xl">
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                      <Heart size={18} className="text-[#EC407A]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-[#78909C] mb-0.5">Age</p>
+                      <p className="text-sm font-semibold text-[#1E3A5F]">{age ? `${age} years` : 'Not set'}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Sidebar Area */}
-          <div className="col-span-12 lg:col-span-4 space-y-4 md:space-y-6">
-            {/* Contact Information */}
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 md:p-6">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="font-bold text-[#1E293B]">Contact Information</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[#F8FAFC] rounded-lg flex items-center justify-center text-[#94A3B8]">
-                    <Mail size={16} />
-                  </div>
-                  <span className="text-sm text-[#64748B] break-all">{email}</span>
+          {/* Contact Information */}
+          <div className="bg-white rounded-2xl border border-[#E0E0E0] shadow-sm p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold text-[#1E3A5F]">Contact Information</h3>
+                  {isEditingContact ? (
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({
+                            name: user?.name || '',
+                            phone: user?.phone || '',
+                            location: user?.location || '',
+                            school: user?.school || '',
+                            grade: user?.grade || ''
+                          });
+                          setIsEditingContact(false);
+                        }}
+                        disabled={saving}
+                        className="text-xs text-[#78909C] hover:text-[#1E3A5F] font-semibold transition-colors disabled:cursor-not-allowed"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await handleUpdateProfile();
+                          setIsEditingContact(false);
+                        }}
+                        disabled={saving}
+                        className="text-xs text-[#1E88E5] hover:text-[#1565C0] font-semibold flex items-center gap-1 transition-colors disabled:cursor-not-allowed"
+                      >
+                        {saving && <Loader2 size={12} className="animate-spin" />}
+                        Save
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingContact(true)}
+                      className="text-xs text-[#1E88E5] font-semibold hover:underline transition-all"
+                    >
+                      Edit
+                    </button>
+                  )}
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[#F8FAFC] rounded-lg flex items-center justify-center text-[#94A3B8]">
-                    <Phone size={16} />
-                  </div>
-                      {isEditingProfile ? (
+                <div className="space-y-4">
+                  {email && (
+                    <div className="flex items-center gap-4 p-3 bg-[#FAFAFA] rounded-xl">
+                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#1E88E5] shrink-0 shadow-sm">
+                        <Mail size={18} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-[#78909C] mb-1">Email Address</p>
+                        <p className="text-sm font-medium text-[#1E3A5F] truncate">{email}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4 p-3 bg-[#FAFAFA] rounded-xl">
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#1E88E5] shrink-0 shadow-sm">
+                      <Phone size={18} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-[#78909C] mb-1">Phone Number</p>
+                      {isEditingContact ? (
                         <input
-                          type="text"
+                          type="tel"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-[#CBD5E1] text-sm text-[#1E293B] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1B8A44]/20 focus:border-[#1B8A44] disabled:opacity-60"
+                          disabled={saving}
+                          placeholder="Enter phone number"
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-[#E0E0E0] text-[#1E3A5F] focus:ring-2 focus:ring-[#1E88E5]/20 focus:border-[#1E88E5] outline-none transition-all disabled:cursor-not-allowed"
                         />
                       ) : (
-                        <span className="text-sm text-[#64748B]">{formData.phone}</span>
+                        <p className="text-sm font-medium text-[#1E3A5F]">{formData.phone || 'Not provided'}</p>
                       )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[#F8FAFC] rounded-lg flex items-center justify-center text-[#94A3B8]">
-                    <MapPin size={16} />
+                    </div>
                   </div>
-                      {isEditingProfile ? (
+                  <div className="flex items-center gap-4 p-3 bg-[#FAFAFA] rounded-xl">
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#1E88E5] shrink-0 shadow-sm">
+                      <MapPin size={18} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-[#78909C] mb-1">Location</p>
+                      {isEditingContact ? (
                         <input
                           type="text"
                           value={formData.location}
                           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border border-[#CBD5E1] text-sm text-[#1E293B] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1B8A44]/20 focus:border-[#1B8A44] disabled:opacity-60"
+                          disabled={saving}
+                          placeholder="Enter your location"
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-[#E0E0E0] text-[#1E3A5F] focus:ring-2 focus:ring-[#1E88E5]/20 focus:border-[#1E88E5] outline-none transition-all disabled:cursor-not-allowed"
                         />
                       ) : (
-                        <span className="text-sm text-[#64748B] line-clamp-1">{formData.location}</span>
+                        <p className="text-sm font-medium text-[#1E3A5F] truncate">{formData.location || 'Not provided'}</p>
                       )}
-                </div>
-              </div>
-            </div>
-
-            {/* Achievements Section */}
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 md:p-6">
-              <div className="flex items-center justify-between mb-5">
-              </div>
-              <div className="space-y-5">
-                {dashboardData?.achievements && dashboardData.achievements.length > 0 ? dashboardData.achievements.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 bg-[#DCFCE7] rounded-lg flex items-center justify-center`}>
-                        {item.icon === 'star' && <Star size={18} className="text-[#1B8A44]" />}
-                        {item.icon === 'target' && <Target size={18} className="text-[#1B8A44]" />}
-                        {item.icon === 'award' && <Award size={18} className="text-[#1B8A44]" />}
-                        {item.icon === 'trophy' && <Trophy size={18} className="text-[#1B8A44]" />}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-[#1E293B]">{item.title}</h4>
-                        <p className="text-[11px] text-[#64748B]">{item.description}</p>
-                      </div>
                     </div>
                   </div>
-                )) : (
-                  <div className="text-center text-[#64748B] text-xs py-4">No achievements yet</div>
-                )}
-              </div>
-            </div>
-
-            {/* Account Settings */}
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 md:p-6">
-              <h3 className="font-bold text-[#1E293B] mb-5">Account Settings</h3>
-              <div className="space-y-2">
-                {[
-                  { label: 'Change Password', icon: Shield },
-                  { label: 'Notification Preferences', icon: Bell },
-                  { label: 'Privacy Settings', icon: Settings },
-                ].map((item, i) => (
-                  <button 
-                    key={i} 
-                    className="w-full flex items-center justify-between p-3 hover:bg-[#F8FAFC] rounded-xl transition-colors group"
-                    onClick={() => {
-                       if (item.label === 'Change Password') router.push('/student/profile/change-password');
-                     }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon size={18} className="text-[#94A3B8] group-hover:text-[#1B8A44]" />
-                      <span className="text-sm text-[#64748B] font-medium">{item.label}</span>
+                  <div className="flex items-center gap-4 p-3 bg-[#FAFAFA] rounded-xl">
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#1E88E5] shrink-0 shadow-sm">
+                      <School size={18} />
                     </div>
-                    <ChevronRight size={16} className="text-[#CBD5E1]" />
-                  </button>
-                ))}
-
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-[#78909C] mb-1">School</p>
+                      {isEditingContact ? (
+                        <input
+                          type="text"
+                          value={formData.school}
+                          onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                          disabled={saving}
+                          placeholder="Enter your school name"
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-[#E0E0E0] text-[#1E3A5F] focus:ring-2 focus:ring-[#1E88E5]/20 focus:border-[#1E88E5] outline-none transition-all disabled:cursor-not-allowed"
+                        />
+                      ) : (
+                        <p className="text-sm font-medium text-[#1E3A5F]">{formData.school || 'Not provided'}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-3 bg-[#FAFAFA] rounded-xl">
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#1E88E5] shrink-0 shadow-sm">
+                      <BookOpen size={18} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-[#78909C] mb-1">Grade/Class</p>
+                      {isEditingContact ? (
+                        <input
+                          type="text"
+                          value={formData.grade}
+                          onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                          disabled={saving}
+                          placeholder="Enter your grade"
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-[#E0E0E0] text-[#1E3A5F] focus:ring-2 focus:ring-[#1E88E5]/20 focus:border-[#1E88E5] outline-none transition-all disabled:cursor-not-allowed"
+                        />
+                      ) : (
+                        <p className="text-sm font-medium text-[#1E3A5F]">{formData.grade || 'Not provided'}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
         </div>
-      </div>
-    </StudentDashboardLayout>
+    </div>
   );
 }
-

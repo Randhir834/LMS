@@ -13,6 +13,7 @@ export interface CreateCourseData {
   language?: string;
   what_you_learn?: string;
   requirements?: string;
+  total_lessons?: number;
   instructor_ids?: number[];
 }
 
@@ -120,7 +121,7 @@ export const courseService = {
 
   // Get course materials
   getCourseMaterials: async (courseId: number) => {
-    const response = await api.get(`/course-materials/courses/${courseId}/materials`);
+    const response = await api.get(`/courses/${courseId}/materials`);
     return response.data;
   },
 

@@ -34,7 +34,7 @@ export interface Course {
   instructor_id?: number;
   instructor_name?: string;
   instructors?: CourseInstructor[];
-  status: 'draft' | 'published' | 'archived';
+  status: 'published' | 'archived';
   duration_value: number;
   duration_unit: 'days' | 'weeks' | 'months';
   level: 'beginner' | 'intermediate' | 'advanced';
@@ -47,6 +47,7 @@ export interface Course {
   total_sections?: number;
   is_enrolled?: boolean;
   progress?: number;
+  google_meet_link?: string;
   created_at: string;
   updated_at: string;
 }
@@ -80,7 +81,6 @@ export interface Enrollment {
   user_id: number;
   course_id: number;
   status: 'active' | 'completed' | 'cancelled';
-  progress: number;
   enrolled_at: string;
   completed_at?: string;
   course_title?: string;
@@ -190,14 +190,20 @@ export interface QuizAnswer {
 export interface LiveClass {
   id: number;
   course_id: number;
+  lesson_id?: number;
+  section_id?: number;
   title: string;
   description?: string;
   meet_link: string;
   scheduled_at: string;
   duration_minutes: number;
   status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+  created_by: number;
   course_title?: string;
   instructor_name?: string;
+  created_by_name?: string;
+  created_by_email?: string;
+  thumbnail_url?: string;
   created_at: string;
   updated_at: string;
 }

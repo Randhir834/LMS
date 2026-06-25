@@ -14,20 +14,11 @@ interface GlobalSearchProps {
 const getSearchContext = (pathname: string) => {
   const courseMatch = pathname.match(/\/courses\/(\d+)/);
   const studentMatch = pathname.match(/\/students/);
-  const assignmentMatch = pathname.match(/\/assignments/);
-  const quizMatch = pathname.match(/\/quizzes/);
-  const liveClassMatch = pathname.match(/\/live-classes/);
   
   if (courseMatch) {
     return { type: 'course', id: parseInt(courseMatch[1]) };
   } else if (studentMatch) {
     return { type: 'student', id: null };
-  } else if (assignmentMatch) {
-    return { type: 'assignment', id: null };
-  } else if (quizMatch) {
-    return { type: 'quiz', id: null };
-  } else if (liveClassMatch) {
-    return { type: 'live_class', id: null };
   }
   
   return { type: null, id: null };
@@ -42,7 +33,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
   const [results, setResults] = useState<SearchResponse | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -112,12 +103,6 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
       case 'section':
         router.push(`/instructor/courses/${results?.results.sections.find(s => s.id === id)?.course_id}`);
         break;
-      case 'assignment':
-        router.push(`/instructor/assignments`);
-        break;
-      case 'quiz':
-        router.push(`/instructor/quizzes`);
-        break;
       case 'live_class':
         router.push(`/instructor/live-classes`);
         break;
@@ -138,15 +123,11 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
   const getIcon = (type: string) => {
     switch (type) {
       case 'course':
-        return <BookOpen className="text-[#1B8A44]" size={18} />;
+        return <BookOpen className="text-[#1E88E5]" size={18} />;
       case 'lesson':
         return <Video className="text-[#3B82F6]" size={18} />;
       case 'section':
         return <Folder className="text-[#8B5CF6]" size={18} />;
-      case 'assignment':
-        return <FileText className="text-[#F59E0B]" size={18} />;
-      case 'quiz':
-        return <FileText className="text-[#EF4444]" size={18} />;
       case 'live_class':
         return <Video className="text-[#EC4899]" size={18} />;
       case 'user':
@@ -165,8 +146,6 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
       course: 'Course',
       lesson: 'Lesson',
       section: 'Section',
-      assignment: 'Assignment',
-      quiz: 'Quiz',
       live_class: 'Live Class',
       user: 'Student',
       category: 'Category',
@@ -194,8 +173,8 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <span className={`text-xs px-2 py-0.5 rounded-full ${
                 item.status === 'published' || item.status === 'active' || item.status === 'completed'
                   ? 'bg-[#D1FAE5] text-[#065F46]'
-                  : item.status === 'draft'
-                  ? 'bg-[#FEF3C7] text-[#92400E]'
+                  : item.status === 'archived'
+                  ? 'bg-[#FEE2E2] text-[#991B1B]'
                   : 'bg-[#E5E7EB] text-[#374151]'
               }`}>
                 {item.status}
@@ -236,7 +215,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
           {item.duration && (
             <p className="text-xs text-[#64748B] mt-1">⏱️ {item.duration} min</p>
           )}
-
+          {/* Price hidden for instructors */}
         </div>
       </button>
     );
@@ -251,10 +230,6 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
       return 'Search in this course...';
     } else if (context.type === 'student') {
       return 'Search students...';
-    } else if (context.type === 'assignment') {
-      return 'Search assignments...';
-    } else if (context.type === 'quiz') {
-      return 'Search quizzes...';
     } else if (context.type === 'live_class') {
       return 'Search live classes...';
     }
@@ -268,7 +243,6 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
         <input
           ref={inputRef}
           type="text"
-          placeholder={getPlaceholder()}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => {
@@ -276,11 +250,11 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               setIsOpen(true);
             }
           }}
-          className="w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-1 sm:py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#1B8A44] focus:border-transparent"
+          className="w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-1 sm:py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-transparent"
         />
         {(query || isLoading) && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-            {isLoading && <Loader2 className="text-[#1B8A44] animate-spin" size={18} />}
+            {isLoading && <Loader2 className="text-[#1E88E5] animate-spin" size={18} />}
             {query && !isLoading && (
               <button
                 onClick={handleClear}
@@ -313,7 +287,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Courses ({results.results.courses.length})
+                    Courses
                   </p>
                 </div>
                 {results.results.courses.map((item) => renderResultItem(item, 'course'))}
@@ -323,7 +297,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Sections ({results.results.sections.length})
+                    Sections
                   </p>
                 </div>
                 {results.results.sections.map((item) => renderResultItem(item, 'section'))}
@@ -333,47 +307,17 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Lessons ({results.results.lessons.length})
+                    Lessons
                   </p>
                 </div>
                 {results.results.lessons.map((item) => renderResultItem(item, 'lesson'))}
-              </div>
-            )}
-            {results.results.assignments.length > 0 && (
-              <div>
-                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Assignments ({results.results.assignments.length})
-                  </p>
-                </div>
-                {results.results.assignments.map((item) => renderResultItem(item, 'assignment'))}
-              </div>
-            )}
-            {results.results.quizzes.length > 0 && (
-              <div>
-                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Quizzes ({results.results.quizzes.length})
-                  </p>
-                </div>
-                {results.results.quizzes.map((item) => renderResultItem(item, 'quiz'))}
-              </div>
-            )}
-            {results.results.liveClasses.length > 0 && (
-              <div>
-                <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                  <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Live Classes ({results.results.liveClasses.length})
-                  </p>
-                </div>
-                {results.results.liveClasses.map((item) => renderResultItem(item, 'live_class'))}
               </div>
             )}
             {results.results.users && results.results.users.length > 0 && (
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Students ({results.results.users.length})
+                    Students
                   </p>
                 </div>
                 {results.results.users.map((item) => renderResultItem(item, 'user'))}
@@ -383,7 +327,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Categories ({results.results.categories.length})
+                    Categories
                   </p>
                 </div>
                 {results.results.categories.map((item) => renderResultItem(item, 'category'))}
@@ -393,7 +337,7 @@ export default function GlobalSearch({ initialQuery = '', className = '' }: Glob
               <div>
                 <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                    Enrollments ({results.results.enrollments.length})
+                    Enrollments
                   </p>
                 </div>
                 {results.results.enrollments.map((item) => renderResultItem(item, 'enrollment'))}

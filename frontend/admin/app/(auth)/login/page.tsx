@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import AdminAuthSplitShell from '@/components/layouts/AdminAuthSplitShell';
+import { getUserFriendlyError, logTechnicalError } from '@/utils/errorHandler';
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
@@ -13,14 +14,46 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
 
-  // Redirect if already logged in
-  if (isAuthenticated) {
-    router.push('/dashboard');
-    return null;
-  }
+  // Redirect if already authenticated and clear logout flag
+  useEffect(() => {
+    // Clear logout flag if present
+    sessionStorage.removeItem('logout_initiated');
+    
+    // Clear any stale tokens on logout redirect
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('logout') || urlParams.has('session_expired')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('sessionToken');
+        sessionStorage.removeItem('auth_session');
+      }
+    }
+    
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData.role === 'admin') {
+          // Set auth session to prevent redirect loop
+          sessionStorage.setItem('auth_session', 'active');
+          router.replace('/dashboard');
+          return;
+        }
+      } catch {
+        // Invalid user data, clear it
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('sessionToken');
+        sessionStorage.removeItem('auth_session');
+      }
+    }
+  }, [router]);
 
   // Detect if the input is email or phone
   const isEmail = identifier.includes('@');
@@ -36,45 +69,16 @@ export default function LoginPage() {
       const data = await authService.login({ identifier, password, expectedRole: 'admin' });
       
       if (!data.token || !data.user) {
-        throw new Error('Invalid response from server: missing token or user data');
+        throw new Error('Invalid response from server');
       }
       
-      login(data.user, data.token);
-      router.push('/dashboard');
+      login(data.user, data.token, data.sessionToken);
+      
+      // Use replace to prevent back navigation to login page after successful login
+      router.replace('/dashboard');
     } catch (err: unknown) {
-      // Handle different error types
-      let message = 'Login failed. Please try again.';
-      
-      if (err instanceof Error) {
-        // Network, timeout, or other errors
-        message = err.message;
-        
-        // Handle specific error types
-        if (err.message.includes('ECONNREFUSED') || err.message.includes('ENETUNREACH')) {
-          message = 'Cannot connect to server. Please check your connection and try again.';
-        } else if (err.message.includes('timeout')) {
-          message = 'Request timeout. Please try again.';
-        }
-      } else {
-        const error = err as { response?: { data?: { error?: string } }; message?: string; code?: string };
-        
-        // Structured API error response
-        if (error.response?.data?.error) {
-          message = error.response.data.error;
-        } else if (error.message) {
-          message = error.message;
-        } else if (error.code) {
-          // Axios error code
-          if (error.code === 'ECONNREFUSED' || error.code === 'ENETUNREACH') {
-            message = 'Cannot connect to server. Please check your connection.';
-          } else if (error.code === 'ENOTFOUND') {
-            message = 'Server not found. Please check the backend URL.';
-          } else {
-            message = `Connection error: ${error.code}`;
-          }
-        }
-      }
-      
+      logTechnicalError('Admin Login', err);
+      const message = getUserFriendlyError(err);
       setError(message);
     } finally {
       setLoading(false);

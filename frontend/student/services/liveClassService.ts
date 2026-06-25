@@ -123,9 +123,4 @@ export const liveClassService = {
     const thirtyMinutes = 30 * 60 * 1000;
     return classTime - now <= thirtyMinutes && classTime > now;
   },
-
-  getCoursesWithLiveClasses: async () => {
-    const response = await api.get('/live-classes/courses-with-classes');
-    return response.data;
-  },
 };

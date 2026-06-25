@@ -4,24 +4,18 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Bell, Mail, Home, BookOpen, Video, ClipboardList,
-  BarChart3, Award, Megaphone, HelpCircle, User, Loader2,
-  Menu, X, PlusCircle, GraduationCap, LogOut
+  BookOpen,
+  User,
+  Menu, X, GraduationCap, LogOut, Sparkles
 } from 'lucide-react';
 import { userService, UserProfile } from '@/services/userService';
 import GlobalSearch from '@/components/GlobalSearch';
+import { getAvatarUrlWithCacheBust } from '@/utils/avatarUtils';
 
 const menuItems = [
-  { icon: Home, label: 'Dashboard', href: '/instructor' },
-  { icon: BookOpen, label: 'My Courses', href: '/instructor/courses' },
-  { icon: Video, label: 'Live Classes', href: '/instructor/live-classes' },
-  { icon: ClipboardList, label: 'Assignments', href: '/instructor/assignments' },
-  { icon: ClipboardList, label: 'Quizzes/Tests', href: '/instructor/quizzes' },
-  { icon: ClipboardList, label: 'Attendance', href: '/instructor/attendance' },
-  { icon: GraduationCap, label: 'Students', href: '/instructor/students' },
-  { icon: BarChart3, label: 'Progress', href: '/instructor/progress' },
-  { icon: User, label: 'My Profile', href: '/instructor/profile' },
-  { icon: HelpCircle, label: 'Help & Support', href: '/instructor/help' },
+  { icon: BookOpen, label: 'My Courses', href: '/instructor/courses', gradient: 'from-blue-500 to-cyan-500' },
+  { icon: GraduationCap, label: 'Students', href: '/instructor/students', gradient: 'from-pink-500 to-rose-500' },
+  { icon: User, label: 'My Profile', href: '/instructor/profile', gradient: 'from-teal-500 to-cyan-500' },
 ];
 
 interface InstructorDashboardLayoutProps {
@@ -34,31 +28,63 @@ export default function InstructorDashboardLayout({ children }: InstructorDashbo
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
+      // Check if token exists before fetching profile
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('No authentication token found');
+        setUserLoading(false);
+        router.push('/login');
+        return;
+      }
+
       try {
         const profile = await userService.getProfile();
         setUser(profile);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch profile:', err);
+        
+        // Handle authentication errors
+        if (err.response?.status === 401 || err.response?.status === 404) {
+          console.warn('Authentication failed, redirecting to login');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          router.push('/login');
+        }
       } finally {
         setUserLoading(false);
       }
     };
     fetchUser();
-  }, []);
+
+    // Listen for profile photo updates
+    const handleProfilePhotoUpdate = (event: any) => {
+      if (event.detail?.user) {
+        setUser(event.detail.user);
+      }
+    };
+
+    window.addEventListener('profilePhotoUpdated', handleProfilePhotoUpdate);
+    
+    return () => {
+      window.removeEventListener('profilePhotoUpdated', handleProfilePhotoUpdate);
+    };
+  }, [router]);
 
 
   const displayName = user?.name || 'Instructor';
-  const avatarUrl = user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1B8A44&color=fff&size=128`;
+  const avatarUrl = getAvatarUrlWithCacheBust(user?.avatar_url, displayName);
 
   const handleLogout = () => {
+    setLoggingOut(true);
     userService.logout();
   };
 
   return (
-    <div className="min-h-screen bg-[#F7FAFC] flex">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex">
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
@@ -71,40 +97,48 @@ export default function InstructorDashboardLayout({ children }: InstructorDashbo
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-[#0F172A]/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Left Sidebar — mobile drawer, desktop fixed */}
+      {/* Left Sidebar — Modernized */}
       <aside
-        className={`bg-white border-r border-[#E2E8F0] flex flex-col z-50
+        className={`bg-white/90 backdrop-blur-xl border-r border-gray-200 flex flex-col z-50 shadow-xl
           fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:flex
-          w-64 lg:w-[12.5rem]
+          w-72 lg:w-64
         `}
       >
-        {/* Logo */}
-        <div className="relative border-b border-[#E2E8F0] lg:border-none flex items-center justify-center px-3 py-4 sm:px-4 sm:py-5 lg:px-5 lg:py-6 shrink-0">
-          <div className="relative flex items-center justify-center shrink-0 transition-all duration-300 w-full h-12 sm:h-14 md:h-16 lg:h-20">
+        {/* Logo with gradient background */}
+        <div className="relative border-b border-gray-200 lg:border-none flex items-center justify-center px-4 py-6 shrink-0 bg-gradient-to-r from-blue-600 to-purple-600 lg:bg-none">
+          <div className="relative flex items-center justify-center shrink-0 transition-all duration-300 w-full h-14 sm:h-16 lg:h-20">
             <img
               src="/images/navbarlogo.png"
               alt="PlayFit"
-              className="w-full h-full object-contain max-w-full max-h-full"
+              className="w-full h-full object-contain max-w-full max-h-full filter lg:filter-none brightness-0 invert lg:brightness-100 lg:invert-0"
             />
           </div>
           <button
             onClick={() => setMobileOpen(false)}
-            className="absolute right-4 top-4 lg:hidden p-1.5 rounded-md hover:bg-[#F1F5F9] text-[#64748B]"
+            className="absolute right-4 top-4 lg:hidden p-2 rounded-lg hover:bg-white/20 text-white transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-3 py-4">
+          {/* Welcome Badge */}
+          <div className="mb-4 px-3 py-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+            <div className="flex items-center gap-2 text-sm font-medium text-blue-700">
+              <Sparkles className="w-4 h-4" />
+              <span>Welcome Instructor!</span>
+            </div>
+          </div>
+
           {/* Navigation */}
-          <nav className="px-2 sm:px-3 lg:px-3 space-y-0.5 lg:space-y-1">
+          <nav className="space-y-1.5">
             {menuItems.map((item, index) => {
               const isActive = item.href === '/instructor'
                 ? pathname === '/instructor'
@@ -114,93 +148,113 @@ export default function InstructorDashboardLayout({ children }: InstructorDashbo
                   key={index}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 lg:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-colors ${
+                  className={`group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-[#F0FDF4] text-[#1B8A44] font-medium'
-                      : 'text-[#475569] hover:bg-[#F1F5F9] hover:text-[#1B8A44]'
-                  }`}
+                      ? 'bg-gradient-to-r text-white shadow-lg'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  } ${isActive ? item.gradient : ''}`}
                 >
-                  <item.icon size={16} className="shrink-0 sm:size-[18px]" />
-                  <span className="truncate">{item.label}</span>
+                  {isActive && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-xl"></div>
+                  )}
+                  <div className={`relative ${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`}>
+                    <item.icon size={20} className="shrink-0" />
+                  </div>
+                  <span className="relative truncate">{item.label}</span>
+                  {isActive && (
+                    <div className="absolute right-2 w-2 h-2 bg-white rounded-full shadow-lg animate-pulse"></div>
+                  )}
                 </Link>
               );
             })}
           </nav>
 
           {/* Bottom Image Section */}
-          <div className="mt-0.5 lg:mt-1 px-2 sm:px-3 lg:px-3 pb-4">
-            <img
-              src="/images/navbarbottomimage.png"
-              alt="Instructor Success"
-              className="w-full h-auto object-contain rounded-xl"
-            />
+          <div className="mt-6 px-2">
+            <div className="relative rounded-2xl overflow-hidden shadow-lg group hover:shadow-xl transition-shadow">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent group-hover:from-black/30 transition-colors"></div>
+              <img
+                src="/images/navvbarbottomimage.png"
+                alt="Instructor Success"
+                className="w-full h-auto object-contain"
+              />
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-[12.5rem] lg:h-screen lg:overflow-y-auto no-scrollbar">
-        {/* Top Header */}
-        <header className="bg-white border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 py-1 lg:py-1.5 sticky top-0 z-20">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-64 lg:h-screen lg:overflow-y-auto no-scrollbar">
+        {/* Top Header - Modernized */}
+        <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 sticky top-0 z-20 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 flex items-center gap-3">
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileOpen(true)}
-                className="lg:hidden p-2 rounded-md hover:bg-[#F1F5F9] text-[#64748B]"
+                className="lg:hidden p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 text-gray-600 hover:text-blue-600 transition-all"
                 aria-label="Open menu"
               >
-                <Menu size={20} />
+                <Menu size={22} />
               </button>
-              {/* Desktop collapse toggle removed */}
               <div className="hidden lg:block w-4" />
               {/* Global Search */}
               <GlobalSearch className="flex-1 max-w-4xl" />
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-              <button className="relative p-2 text-[#64748B] hover:text-[#1B8A44] transition-colors hidden sm:block">
-                <Bell size={20} />
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-[#DC2626] text-white text-xs rounded-full flex items-center justify-center font-medium">3</span>
-              </button>
-              <button className="relative p-2 text-[#64748B] hover:text-[#1B8A44] transition-colors hidden sm:block">
-                <Mail size={20} />
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-[#DC2626] text-white text-xs rounded-full flex items-center justify-center font-medium">2</span>
-              </button>
-
+            <div className="flex items-center gap-3 shrink-0">
               {/* Profile Display */}
-              <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-[#E2E8F0] py-1">
+              <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                 {userLoading ? (
-                  <Loader2 className="size-8 sm:size-9 animate-spin text-[#1B8A44]" />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 animate-pulse"></div>
                 ) : (
-                  <img
-                    src={avatarUrl}
-                    alt={displayName}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover"
-                  />
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full opacity-75 group-hover:opacity-100 blur transition-opacity"></div>
+                    <img
+                      key={user?.avatar_url || 'default'}
+                      src={avatarUrl}
+                      alt={displayName}
+                      className="relative w-10 h-10 rounded-full object-cover ring-2 ring-white"
+                    />
+                  </div>
                 )}
                 <div className="hidden sm:block text-right">
-                  <p className="text-sm font-semibold text-[#1E293B]">{displayName}</p>
-                  <p className="text-xs text-[#64748B]">Instructor</p>
+                  <p className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{displayName}</p>
+                  <p className="text-xs text-gray-500">Instructor</p>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="sm:hidden p-2 rounded-lg border border-[#FECACA] bg-white text-[#DC2626] hover:text-[#B91C1C] hover:bg-[#FEF2F2] transition-colors"
+                  disabled={loggingOut}
+                  className="sm:hidden p-2.5 rounded-xl border border-red-200 bg-white text-red-500 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Logout"
                 >
-                  <LogOut size={18} />
+                  {loggingOut ? (
+                    <div className="w-[18px] h-[18px] border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <LogOut size={18} />
+                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#FECACA] bg-white text-[#DC2626] text-sm font-semibold hover:bg-[#FEF2F2] transition-colors"
+                  disabled={loggingOut}
+                  className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 bg-white text-red-500 text-sm font-semibold hover:bg-red-50 hover:border-red-300 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Logout"
                 >
-                  <LogOut size={16} />
-                  Logout
+                  {loggingOut ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                      Logging out...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut size={16} />
+                      Logout
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -208,7 +262,9 @@ export default function InstructorDashboardLayout({ children }: InstructorDashbo
         </header>
 
         {/* Page Content */}
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 relative">
+          {children}
+        </main>
       </div>
     </div>
   );
