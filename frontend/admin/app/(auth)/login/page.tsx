@@ -9,6 +9,7 @@ import AdminAuthSplitShell from '@/components/layouts/AdminAuthSplitShell';
 import { getUserFriendlyError, logTechnicalError } from '@/utils/errorHandler';
 
 export default function LoginPage() {
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -55,11 +56,6 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  // Detect if the input is email or phone
-  const isEmail = identifier.includes('@');
-  const inputType = isEmail ? 'email' : 'tel';
-  const placeholder = 'Enter your email or phone number';
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -105,27 +101,80 @@ export default function LoginPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+        {/* Login Method Tabs */}
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex gap-2 sm:gap-3 p-1 sm:p-1.5 bg-gray-100 rounded-lg sm:rounded-xl">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMethod('email');
+                setIdentifier('');
+              }}
+              className={`flex-1 py-2.5 sm:py-3 rounded-md sm:rounded-lg font-semibold text-xs sm:text-sm transition-all ${
+                loginMethod === 'email'
+                  ? 'bg-white text-primary-500 shadow-sm'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                <svg width="14" height="14" className="sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                Email
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMethod('phone');
+                setIdentifier('');
+              }}
+              className={`flex-1 py-2.5 sm:py-3 rounded-md sm:rounded-lg font-semibold text-xs sm:text-sm transition-all ${
+                loginMethod === 'phone'
+                  ? 'bg-white text-primary-500 shadow-sm'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                <svg width="14" height="14" className="sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                Phone
+              </div>
+            </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="identifier" className="block text-xs sm:text-sm font-medium text-text-primary">
+              {loginMethod === 'email' ? 'Email Address' : 'Phone Number'}
+            </label>
+            <div className="relative">
+              <div className="absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
+                {loginMethod === 'email' ? (
+                  <svg width="16" height="16" className="sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                ) : (
+                  <svg width="16" height="16" className="sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                )}
+              </div>
+              <input
+                id="identifier"
+                type={loginMethod === 'email' ? 'email' : 'tel'}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder={loginMethod === 'email' ? 'Enter your email' : 'Enter your phone number'}
+                required
+                className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl border border-border text-xs sm:text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Unified Email/Phone Input */}
-        <div className="space-y-1.5">
-          <label htmlFor="identifier" className="block text-xs sm:text-sm font-medium text-text-primary">
+        <div className="space-y-1.5" style={{ display: 'none' }}>
+          <label htmlFor="identifier-old" className="block text-xs sm:text-sm font-medium text-text-primary">
             Email or Phone Number
           </label>
           <div className="relative">
-            <div className="absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
-              {isEmail ? (
-                <svg width="16" height="16" className="sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-              ) : (
-                <svg width="16" height="16" className="sm:w-4.5 sm:h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              )}
-            </div>
             <input
-              id="identifier"
-              type={inputType}
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder={placeholder}
-              required
-              className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl border border-border text-xs sm:text-sm text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              id="identifier-old"
+              type="text"
+              className="w-full"
             />
           </div>
         </div>
