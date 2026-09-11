@@ -47,21 +47,20 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token');
-        // Only redirect if we had a token (meaning we were trying to access protected resource)
+        // Only redirect to login if we had a token (meaning we were trying to access protected resource)
         if (token) {
           // Clear all auth data including session token
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           localStorage.removeItem('sessionToken');
           sessionStorage.removeItem('auth_session');
-          sessionStorage.removeItem('page_loaded');
           sessionStorage.setItem('logout_initiated', 'true');
           
           // Dispatch logout event
           window.dispatchEvent(new Event('auth:logout'));
           
-          // Redirect to home page instead of login page with cache busting
-          window.location.href = `/?session_expired=${Date.now()}`;
+          // Hard redirect to login with cache busting
+          window.location.href = `/login?session_expired=${Date.now()}`;
         }
       }
     }

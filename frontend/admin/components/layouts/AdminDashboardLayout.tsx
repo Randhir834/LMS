@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Bell, Mail, Loader2, Menu, X, LogOut,
   LayoutDashboard, GraduationCap, Users, BookOpen, PlusCircle,
-  CreditCard, FileText, BarChart3, User as UserIcon, LucideIcon
+  CreditCard, FileText, BarChart3, User as UserIcon, MessageSquare, LucideIcon, Newspaper
 } from 'lucide-react';
 import { userService, UserProfile } from '@/services/userService';
 import GlobalSearch from '@/components/GlobalSearch';
@@ -16,6 +16,8 @@ const menuItems = [
   { label: 'Students', href: '/admin/students', icon: GraduationCap },
   { label: 'Instructors', href: '/admin/instructors', icon: Users },
   { label: 'Courses', href: '/admin/courses', icon: BookOpen },
+  { label: 'Blogs', href: '/admin/blogs', icon: Newspaper },
+  { label: 'Reviews', href: '/admin/reviews', icon: MessageSquare },
   { label: 'Payments', href: '/admin/payments', icon: CreditCard },
   { label: 'Profile', href: '/admin/profile-settings', icon: UserIcon },
 ];
@@ -96,7 +98,7 @@ export default function AdminDashboardLayout({ children }: AdminDashboardLayoutP
         <div className="relative border-b border-[#E0E0E0] lg:border-none flex items-center justify-center px-3 py-4 sm:px-4 sm:py-5 lg:px-5 lg:py-6 shrink-0">
           <div className="relative flex items-center justify-center shrink-0 transition-all duration-300 w-full h-12 sm:h-14 md:h-16 lg:h-20">
             <img
-              src="/images/navbarlogo.png"
+              src="/logo.jpg"
               alt="PlayFit"
               className="w-full h-full object-contain max-w-full max-h-full"
             />

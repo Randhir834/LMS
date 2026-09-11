@@ -11,6 +11,7 @@ import {
 import { userService, UserProfile } from '@/services/userService';
 import GlobalSearch from '@/components/GlobalSearch';
 import { getAvatarUrlWithCacheBust } from '@/utils/avatarUtils';
+import PageTransition from '@/components/PageTransition';
 
 const menuItems = [
   { icon: BookOpen, label: 'My Courses', href: '/instructor/courses', gradient: 'from-blue-500 to-cyan-500' },
@@ -28,7 +29,6 @@ export default function InstructorDashboardLayout({ children }: InstructorDashbo
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [userLoading, setUserLoading] = useState(true);
-  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -79,7 +79,6 @@ export default function InstructorDashboardLayout({ children }: InstructorDashbo
   const avatarUrl = getAvatarUrlWithCacheBust(user?.avatar_url, displayName);
 
   const handleLogout = () => {
-    setLoggingOut(true);
     userService.logout();
   };
 
@@ -115,7 +114,7 @@ export default function InstructorDashboardLayout({ children }: InstructorDashbo
         <div className="relative border-b border-gray-200 lg:border-none flex items-center justify-center px-4 py-6 shrink-0 bg-gradient-to-r from-blue-600 to-purple-600 lg:bg-none">
           <div className="relative flex items-center justify-center shrink-0 transition-all duration-300 w-full h-14 sm:h-16 lg:h-20">
             <img
-              src="/images/navbarlogo.png"
+              src="/logo.jpg"
               alt="PlayFit"
               className="w-full h-full object-contain max-w-full max-h-full filter lg:filter-none brightness-0 invert lg:brightness-100 lg:invert-0"
             />
@@ -226,44 +225,31 @@ export default function InstructorDashboardLayout({ children }: InstructorDashbo
                 <button
                   type="button"
                   onClick={handleLogout}
-                  disabled={loggingOut}
-                  className="sm:hidden p-2.5 rounded-xl border border-red-200 bg-white text-red-500 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="sm:hidden p-2.5 rounded-xl border border-red-200 bg-white text-red-500 hover:text-red-600 hover:bg-red-50 transition-all"
                   aria-label="Logout"
                 >
-                  {loggingOut ? (
-                    <div className="w-[18px] h-[18px] border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <LogOut size={18} />
-                  )}
+                  <LogOut size={18} />
                 </button>
 
                 <button
                   type="button"
                   onClick={handleLogout}
-                  disabled={loggingOut}
-                  className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 bg-white text-red-500 text-sm font-semibold hover:bg-red-50 hover:border-red-300 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 bg-white text-red-500 text-sm font-semibold hover:bg-red-50 hover:border-red-300 transition-all hover:scale-105"
                   aria-label="Logout"
                 >
-                  {loggingOut ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                      Logging out...
-                    </>
-                  ) : (
-                    <>
-                      <LogOut size={16} />
-                      Logout
-                    </>
-                  )}
+                  <LogOut size={16} />
+                  Logout
                 </button>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content with Transition */}
         <main className="flex-1 relative">
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
         </main>
       </div>
     </div>

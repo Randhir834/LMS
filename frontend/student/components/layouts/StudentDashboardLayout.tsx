@@ -10,6 +10,7 @@ import {
 import { userService, UserProfile } from '@/services/userService';
 import GlobalSearch from '@/components/GlobalSearch';
 import { getAvatarUrlWithCacheBust } from '@/utils/avatarUtils';
+import PageTransition from '@/components/PageTransition';
 
 const menuItems = [
   { icon: Home, label: 'Dashboard', href: '/student', gradient: 'from-indigo-500 to-blue-500' },
@@ -29,7 +30,6 @@ export default function StudentDashboardLayout({ children }: StudentDashboardLay
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [userLoading, setUserLoading] = useState(true);
-  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -80,7 +80,6 @@ export default function StudentDashboardLayout({ children }: StudentDashboardLay
   const avatarUrl = getAvatarUrlWithCacheBust(user?.avatar_url, displayName);
 
   const handleLogout = () => {
-    setLoggingOut(true);
     userService.logout();
   };
 
@@ -116,7 +115,7 @@ export default function StudentDashboardLayout({ children }: StudentDashboardLay
         <div className="relative border-b border-gray-200 lg:border-none flex items-center justify-center px-3 xs:px-4 py-4 xs:py-5 sm:py-6 shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 lg:bg-none">
           <div className="relative flex items-center justify-center shrink-0 transition-all duration-300 w-full h-12 xs:h-14 sm:h-16 lg:h-16 xl:h-20">
             <img
-              src="/images/navbarlogo.png"
+              src="/logo.jpg"
               alt="PlayFit"
               className="w-full h-full object-contain max-w-full max-h-full filter lg:filter-none brightness-0 invert lg:brightness-100 lg:invert-0"
             />
@@ -227,44 +226,31 @@ export default function StudentDashboardLayout({ children }: StudentDashboardLay
                 <button
                   type="button"
                   onClick={handleLogout}
-                  disabled={loggingOut}
-                  className="sm:hidden p-2 xs:p-2.5 rounded-xl border border-red-200 bg-white text-red-500 hover:text-red-600 hover:bg-red-50 transition-all touch-target active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="sm:hidden p-2 xs:p-2.5 rounded-xl border border-red-200 bg-white text-red-500 hover:text-red-600 hover:bg-red-50 transition-all touch-target active:scale-95"
                   aria-label="Logout"
                 >
-                  {loggingOut ? (
-                    <div className="w-4 h-4 xs:w-[18px] xs:h-[18px] border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <LogOut size={16} className="xs:w-[18px] xs:h-[18px]" />
-                  )}
+                  <LogOut size={16} className="xs:w-[18px] xs:h-[18px]" />
                 </button>
 
                 <button
                   type="button"
                   onClick={handleLogout}
-                  disabled={loggingOut}
-                  className="hidden sm:inline-flex items-center gap-1.5 xs:gap-2 px-3 xs:px-4 py-1.5 xs:py-2 rounded-xl border border-red-200 bg-white text-red-500 text-xs xs:text-sm font-semibold hover:bg-red-50 hover:border-red-300 transition-all hover:scale-105 touch-target active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="hidden sm:inline-flex items-center gap-1.5 xs:gap-2 px-3 xs:px-4 py-1.5 xs:py-2 rounded-xl border border-red-200 bg-white text-red-500 text-xs xs:text-sm font-semibold hover:bg-red-50 hover:border-red-300 transition-all hover:scale-105 touch-target active:scale-95"
                   aria-label="Logout"
                 >
-                  {loggingOut ? (
-                    <>
-                      <div className="w-3 h-3 xs:w-4 xs:h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                      Logging out...
-                    </>
-                  ) : (
-                    <>
-                      <LogOut size={14} className="xs:w-4 xs:h-4" />
-                      Logout
-                    </>
-                  )}
+                  <LogOut size={14} className="xs:w-4 xs:h-4" />
+                  Logout
                 </button>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content with Transition */}
         <main className="flex-1 relative">
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
         </main>
       </div>
     </div>

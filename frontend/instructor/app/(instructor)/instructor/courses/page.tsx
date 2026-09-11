@@ -8,14 +8,12 @@ import CourseCard from '@/components/ui/CourseCard';
 import { courseService } from '@/services/courseService';
 import { categoryService } from '@/services/categoryService';
 import type { Course, Category } from '@/types';
-import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 
 function InstructorCoursesContent() {
   const searchParams = useSearchParams();
   const [courses, setCourses] = useState<Course[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const showLoading = useDelayedLoading(loading, 300);
   const [filters, setFilters] = useState<{
     search?: string;
     status?: string;
@@ -108,7 +106,7 @@ function InstructorCoursesContent() {
       </div>
 
       {/* Course Grid */}
-      {showLoading ? (
+      {loading ? (
         <div className="flex flex-col items-center justify-center py-16">
           <div className="relative">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"></div>
@@ -152,13 +150,7 @@ function InstructorCoursesContent() {
 
 export default function InstructorCoursesPage() {
   return (
-    <Suspense fallback={
-      <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-[#1E88E5]" />
-        </div>
-      </div>
-    }>
+    <Suspense fallback={null}>
       <InstructorCoursesContent />
     </Suspense>
   );

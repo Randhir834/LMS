@@ -17,16 +17,18 @@ export default function RoleGuard({
 
   useEffect(() => {
     const checkAuth = () => {
-      // Check if logout was initiated - prevent bfcache access
+      // Check if logout was initiated - redirect to homepage instead of login
       const logoutInitiated = sessionStorage.getItem('logout_initiated');
       if (logoutInitiated === 'true') {
         sessionStorage.removeItem('logout_initiated');
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        localStorage.removeItem('sessionToken');
         sessionStorage.removeItem('auth_session');
         setIsAuthorized(false);
         setIsChecking(false);
-        window.location.href = '/';
+        // Redirect to homepage, not login
+        window.location.replace('/');
         return false;
       }
 
@@ -34,11 +36,11 @@ export default function RoleGuard({
       const token = localStorage.getItem('token');
       const authSession = sessionStorage.getItem('auth_session');
 
-      // If no token or no auth session, redirect to home page
+      // If no token or no auth session, redirect to login
       if (!rawUser || !token || !authSession) {
         setIsAuthorized(false);
         setIsChecking(false);
-        router.replace('/');
+        router.replace('/login');
         return false;
       }
 
@@ -47,10 +49,11 @@ export default function RoleGuard({
         if (!user?.role || !allowedRoles.includes(user.role as 'admin' | 'instructor' | 'student')) {
           localStorage.removeItem('user');
           localStorage.removeItem('token');
+          localStorage.removeItem('sessionToken');
           sessionStorage.removeItem('auth_session');
           setIsAuthorized(false);
           setIsChecking(false);
-          router.replace('/');
+          router.replace('/login');
           return false;
         }
         setIsAuthorized(true);
@@ -59,10 +62,11 @@ export default function RoleGuard({
       } catch {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        localStorage.removeItem('sessionToken');
         sessionStorage.removeItem('auth_session');
         setIsAuthorized(false);
         setIsChecking(false);
-        router.replace('/');
+        router.replace('/login');
         return false;
       }
     };
@@ -109,8 +113,7 @@ export default function RoleGuard({
     // Listen for custom logout event
     const handleLogout = () => {
       setIsAuthorized(false);
-      // Redirect to home page (not login page)
-      window.location.href = '/';
+      router.replace('/login');
     };
 
     // Add pageshow listener for bfcache detection

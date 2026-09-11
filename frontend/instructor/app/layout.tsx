@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import NavigationLoaderProvider from "@/providers/NavigationLoaderProvider";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,11 +23,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.png', sizes: '1254x1254', type: 'image/png' },
-      { url: '/images/playfit-logo.jpg', sizes: '1254x1254', type: 'image/png' }
+      { url: '/logo.jpg', sizes: '1254x1254', type: 'image/jpeg' },
+      { url: '/logo.jpg', sizes: '1254x1254', type: 'image/jpeg' }
     ],
-    shortcut: '/favicon.png',
-    apple: '/favicon.png',
+    shortcut: '/logo.jpg',
+    apple: '/logo.jpg',
   },
 };
 
@@ -51,7 +51,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <NavigationLoaderProvider />
+        <GoogleAnalytics />
         {children}
       </body>
     </html>

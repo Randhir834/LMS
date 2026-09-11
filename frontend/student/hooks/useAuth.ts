@@ -44,29 +44,11 @@ export function useAuth() {
   }, []);
 
   const logout = useCallback(() => {
-    // Clear all authentication data from localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('sessionToken');
-    
-    // Clear all authentication data from sessionStorage
     sessionStorage.removeItem('auth_session');
-    sessionStorage.removeItem('page_loaded');
-    
-    // Set logout flag to prevent bfcache access
-    sessionStorage.setItem('logout_initiated', 'true');
-    
-    // Clear state
     setUser(null);
-    
-    // Clear any cached data
-    if (typeof window !== 'undefined' && 'caches' in window) {
-      caches.keys().then((names) => {
-        names.forEach((name) => {
-          caches.delete(name);
-        });
-      });
-    }
   }, []);
 
   const updateUser = useCallback((userData: Partial<User>) => {

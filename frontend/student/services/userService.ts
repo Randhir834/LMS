@@ -13,7 +13,6 @@ export interface UserProfile {
   parent_guardian_phone?: string;
   phone?: string;
   location?: string;
-  age?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -29,8 +28,8 @@ export const userService = {
     return response.data.user;
   },
 
-  changePassword: async (oldPassword: string, newPassword: string, confirmPassword: string): Promise<any> => {
-    const response = await api.post('/users/change-password', { oldPassword, newPassword, confirmPassword });
+  changePassword: async (data: { oldPassword: string; newPassword: string; confirmPassword: string }): Promise<any> => {
+    const response = await api.post('/users/change-password', data);
     return response.data;
   },
 
@@ -50,29 +49,18 @@ export const userService = {
     return response.data;
   },
 
-  logout: async () => {
+  logout: () => {
     if (typeof window !== 'undefined') {
-      // Try to call backend logout endpoint to clear session server-side
-      try {
-        await api.post('/auth/logout');
-      } catch (error) {
-        // Continue with client-side logout even if server-side fails
-        console.debug('Server-side logout failed, continuing with client-side cleanup');
-      }
+      // Set logout flag FIRST before any clearing
+      sessionStorage.setItem('logout_initiated', 'true');
       
-      // Clear all authentication data from localStorage
+      // Clear all authentication data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('sessionToken');
-      
-      // Clear all authentication data from sessionStorage
       sessionStorage.removeItem('auth_session');
-      sessionStorage.removeItem('page_loaded');
       
-      // Set logout flag to prevent bfcache access
-      sessionStorage.setItem('logout_initiated', 'true');
-      
-      // Clear any cached data from browser caches
+      // Clear any cached data
       if ('caches' in window) {
         caches.keys().then((names) => {
           names.forEach((name) => {
@@ -81,29 +69,12 @@ export const userService = {
         });
       }
       
-      // Clear any IndexedDB or other storage
-      if ('indexedDB' in window) {
-        try {
-          indexedDB.databases?.().then((databases) => {
-            databases.forEach((db) => {
-              if (db.name) {
-                indexedDB.deleteDatabase(db.name);
-              }
-            });
-          });
-        } catch (e) {
-          // IndexedDB operations may fail in some browsers
-          console.debug('IndexedDB cleanup skipped');
-        }
-      }
-      
       // Dispatch custom event for other components
       window.dispatchEvent(new Event('auth:logout'));
       
-      // Use window.location.href with cache-busting to force full page reload
-      // This prevents bfcache from restoring the previous page
-      // Redirect directly to home page (not login page)
-      window.location.href = `/?logout=${Date.now()}`;
+      // Redirect to Student Home Page directly using replace (no history entry)
+      // This ensures smooth transition without showing login page
+      window.location.replace('/');
     }
   },
 };

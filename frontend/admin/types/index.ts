@@ -98,6 +98,33 @@ export interface Enrollment {
   updated_at: string;
 }
 
+export interface Blog {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt?: string;
+  author: string;
+  featured_image_url?: string;
+  publication_date?: string;
+  status: 'draft' | 'published';
+  created_by?: number;
+  creator_name?: string;
+  creator_email?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogFormData {
+  title: string;
+  content: string;
+  author: string;
+  featured_image_url?: string;
+  publication_date?: string;
+  status?: 'draft' | 'published';
+  excerpt?: string;
+}
+
 export interface Payment {
   id: number;
   user_id: number;
@@ -291,6 +318,37 @@ export interface AuthResponse {
   message: string;
   user: Pick<User, 'id' | 'name' | 'email' | 'role'>;
   token: string;
+}
+
+export interface Review {
+  id: number;
+  name: string;
+  role: string;
+  rating: number;
+  message: string;
+  status: 'pending' | 'approved' | 'rejected';
+  email?: string;
+  phone?: string;
+  course_name?: string;
+  admin_notes?: string;
+  reviewed_by?: number;
+  reviewed_by_name?: string;
+  reviewed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewStats {
+  pending_count: number;
+  approved_count: number;
+  rejected_count: number;
+  total_count: number;
+  average_rating: number;
+}
+
+export interface RatingDistribution {
+  rating: number;
+  count: number;
 }
 
 export interface ApiError {

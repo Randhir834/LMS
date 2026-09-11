@@ -2,47 +2,44 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Head from 'next/head';
 import { ArrowRight, CheckCircle, BookOpen, Users, Trophy, Star, Menu, X, Award, TrendingUp, Mail, Phone, Sparkles, Zap, Heart, Target } from 'lucide-react';
-import { trialService } from '@/services/trialService';
+import { contactService } from '@/services/contactService';
 import CourseRecommendationSection from '@/components/CourseRecommendation/CourseRecommendationSection';
+import CoursesSection from '@/components/CoursesSection/CoursesSection';
+import WriteReview from '@/components/WriteReview';
+import ReviewsSection from '@/components/ReviewsSection';
 
 export default function Home() {
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', grade: '' });
+  const [formData, setFormData] = useState({ 
+    parentName: '', 
+    childName: '', 
+    email: '', 
+    phone: '', 
+    courseInterest: '',
+    message: ''
+  });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showLogoutMessage, setShowLogoutMessage] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Clear auth data on mount if coming from logout
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const hasLogoutParam = urlParams.has('logout');
-      const hasSessionExpiredParam = urlParams.has('session_expired');
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    e.preventDefault();
+    setMobileMenuOpen(false); // Close mobile menu if open
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const offset = 80; // Adjust for fixed header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
       
-      if (hasLogoutParam || hasSessionExpiredParam) {
-        // Clear any remaining auth data
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('sessionToken');
-        sessionStorage.removeItem('auth_session');
-        sessionStorage.removeItem('logout_initiated');
-        sessionStorage.removeItem('page_loaded');
-        
-        // Show logout message for explicit logout (not session expiry)
-        if (hasLogoutParam) {
-          setShowLogoutMessage(true);
-          setTimeout(() => setShowLogoutMessage(false), 4000);
-        }
-        
-        // Clean up URL without reload
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
-      }
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
-  }, []);
+  };
 
   // Community grid animation logic
   useEffect(() => {
@@ -139,52 +136,99 @@ export default function Home() {
     setError('');
 
     try {
-      await trialService.requestTrial(formData);
+      await contactService.submitContact({
+        parentName: formData.parentName,
+        childName: formData.childName,
+        phone: formData.phone,
+        email: formData.email,
+        courseInterest: formData.courseInterest,
+        message: formData.message,
+        type: 'trial' // This form is primarily for trial requests
+      });
+      
       setSubmitted(true);
       setTimeout(() => {
         setSubmitted(false);
-        setFormData({ name: '', email: '', phone: '', grade: '' });
+        setFormData({ 
+          parentName: '', 
+          childName: '', 
+          email: '', 
+          phone: '', 
+          courseInterest: '',
+          message: ''
+        });
       }, 5000);
     } catch (err: unknown) {
-      console.error('Error submitting trial request:', err);
-      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to request trial. Please try again.';
+      console.error('Error submitting contact form:', err);
+      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to submit form. Please try again.';
       setError(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
+    <>
+      <Head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </Head>
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
       {/* Clean Professional Header - Mobile Optimized */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-purple-200 safe-top shadow-lg shadow-purple-500/10">
         <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 max-w-[1920px] mx-auto">
           <div className="flex justify-between items-center h-14 sm:h-16 md:h-16 lg:h-18 xl:h-20">
             <Link href="/" className="flex items-center flex-shrink-0 min-w-0">
               <img
-                src="/images/playfit-logo.jpg"
+                src="/logo.jpg"
                 alt="Playfit"
                 className="h-7 sm:h-9 md:h-11 lg:h-13 xl:h-15 w-auto object-contain max-w-[100px] xs:max-w-[110px] sm:max-w-[130px] md:max-w-[160px] transition-transform hover:scale-105"
               />
             </Link>
             
             <nav className="hidden md:flex items-center gap-2 lg:gap-3 xl:gap-5">
-              <Link href="#courses" className="text-xs lg:text-sm xl:text-base font-bold text-gray-700 hover:text-purple-600 transition-all hover:scale-105 whitespace-nowrap relative group px-1 lg:px-2">
+              <Link 
+                href="/courses"
+                className="text-xs lg:text-sm xl:text-base font-bold text-gray-700 hover:text-purple-600 transition-all hover:scale-105 whitespace-nowrap relative group px-1 lg:px-2 cursor-pointer"
+              >
                 Courses
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 group-hover:w-full transition-all"></span>
               </Link>
-              <Link href="#about" className="text-xs lg:text-sm xl:text-base font-bold text-gray-700 hover:text-purple-600 transition-all hover:scale-105 whitespace-nowrap relative group px-1 lg:px-2">
+              <Link 
+                href="/blog"
+                className="text-xs lg:text-sm xl:text-base font-bold text-gray-700 hover:text-purple-600 transition-all hover:scale-105 whitespace-nowrap relative group px-1 lg:px-2 cursor-pointer"
+              >
+                Blog
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 group-hover:w-full transition-all"></span>
+              </Link>
+              <a 
+                href="#about" 
+                onClick={(e) => scrollToSection(e, 'about')}
+                className="text-xs lg:text-sm xl:text-base font-bold text-gray-700 hover:text-purple-600 transition-all hover:scale-105 whitespace-nowrap relative group px-1 lg:px-2 cursor-pointer"
+              >
                 About
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 group-hover:w-full transition-all"></span>
-              </Link>
-              <Link href="#trial" className="text-xs lg:text-sm xl:text-base font-bold text-gray-700 hover:text-purple-600 transition-all hover:scale-105 whitespace-nowrap relative group px-1 lg:px-2">
+              </a>
+              <a 
+                href="#contact" 
+                onClick={(e) => scrollToSection(e, 'contact')}
+                className="text-xs lg:text-sm xl:text-base font-bold text-gray-700 hover:text-purple-600 transition-all hover:scale-105 whitespace-nowrap relative group px-1 lg:px-2 cursor-pointer"
+              >
+                Contact
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 group-hover:w-full transition-all"></span>
+              </a>
+              <a 
+                href="#trial" 
+                onClick={(e) => scrollToSection(e, 'trial')}
+                className="text-xs lg:text-sm xl:text-base font-bold text-gray-700 hover:text-purple-600 transition-all hover:scale-105 whitespace-nowrap relative group px-1 lg:px-2 cursor-pointer"
+              >
                 Free Trial
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 group-hover:w-full transition-all"></span>
-              </Link>
+              </a>
               <Link href="/login" className="ml-1 lg:ml-2 xl:ml-3 px-3 md:px-4 lg:px-5 xl:px-6 py-1.5 md:py-2 lg:py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 text-white text-xs lg:text-sm xl:text-base font-bold rounded-full transition-all hover:scale-105 hover:shadow-xl whitespace-nowrap shadow-purple-500/40">
                 Login
               </Link>
@@ -204,15 +248,41 @@ export default function Home() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-purple-200 bg-white/95 backdrop-blur-md shadow-lg animate-in slide-in-from-top duration-300">
             <nav className="px-3 sm:px-4 py-3 space-y-2 max-w-md mx-auto">
-              <Link href="#courses" onClick={() => setMobileMenuOpen(false)} className="block py-3 px-4 text-sm font-bold text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all touch-target active:scale-95">
+              <Link 
+                href="/courses"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-3 px-4 text-sm font-bold text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all touch-target active:scale-95 cursor-pointer"
+              >
                 Courses
               </Link>
-              <Link href="#about" onClick={() => setMobileMenuOpen(false)} className="block py-3 px-4 text-sm font-bold text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all touch-target active:scale-95">
+              <Link 
+                href="/blog"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-3 px-4 text-sm font-bold text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all touch-target active:scale-95 cursor-pointer"
+              >
+                Blog
+              </Link>
+              <a 
+                href="#about" 
+                onClick={(e) => scrollToSection(e, 'about')}
+                className="block py-3 px-4 text-sm font-bold text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all touch-target active:scale-95 cursor-pointer"
+              >
                 About
-              </Link>
-              <Link href="#trial" onClick={() => setMobileMenuOpen(false)} className="block py-3 px-4 text-sm font-bold text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all touch-target active:scale-95">
+              </a>
+              <a 
+                href="#contact" 
+                onClick={(e) => scrollToSection(e, 'contact')}
+                className="block py-3 px-4 text-sm font-bold text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all touch-target active:scale-95 cursor-pointer"
+              >
+                Contact
+              </a>
+              <a 
+                href="#trial" 
+                onClick={(e) => scrollToSection(e, 'trial')}
+                className="block py-3 px-4 text-sm font-bold text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all touch-target active:scale-95 cursor-pointer"
+              >
                 Free Trial
-              </Link>
+              </a>
               <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 text-white text-sm font-bold rounded-lg text-center hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 transition-all mt-2 touch-target shadow-lg shadow-purple-500/40 active:scale-95">
                 Login
               </Link>
@@ -221,139 +291,127 @@ export default function Home() {
         )}
       </header>
 
-      {/* Logout Success Message */}
-      {showLogoutMessage && (
-        <div className="fixed top-16 sm:top-20 left-1/2 transform -translate-x-1/2 z-[60] animate-in slide-in-from-top duration-300">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 xs:px-6 sm:px-8 py-3 xs:py-3.5 sm:py-4 rounded-xl shadow-2xl border border-green-400 backdrop-blur-md">
-            <div className="flex items-center gap-2 xs:gap-3">
-              <svg className="w-5 h-5 xs:w-6 xs:h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-sm xs:text-base font-semibold">You have been logged out successfully</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Hero Section - Premium Clean Colorful Design */}
-      <section className="relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-hidden min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)] md:min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-4.5rem)] xl:min-h-[calc(100vh-5rem)] flex items-center">
+      {/* Hero Section - Consistent with Site Design */}
+      <section className="relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-hidden py-12 sm:py-16 md:py-20 border-b border-gray-200">
         {/* Vibrant Background Elements */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-gradient-to-br from-pink-400/20 to-orange-400/20 rounded-full blur-3xl animate-pulse animation-delay-2000"></div>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-12 xs:py-16 sm:py-20 md:py-24 lg:py-28 xl:py-32 w-full">
-          <div className="grid lg:grid-cols-[45%_55%] gap-8 sm:gap-10 md:gap-12 lg:gap-14 xl:gap-16 items-center">
-            {/* Left Content - 45% */}
-            <div className="space-y-5 xs:space-y-6 sm:space-y-7 md:space-y-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 md:gap-12 items-center">
+            {/* Left Content */}
+            <div className="space-y-6 sm:space-y-8">
               {/* Trust Badge */}
-              <div className="inline-flex items-center gap-2 px-3 xs:px-4 py-1.5 xs:py-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-lg shadow-blue-500/25">
-                <Star className="w-3 xs:w-4 h-3 xs:h-4 text-yellow-300 fill-yellow-300" />
-                <span className="text-xs xs:text-sm font-bold text-white">✨ Trusted by 10,000+ Students</span>
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-lg shadow-blue-500/25">
+                <Star className="w-3 sm:w-4 h-3 sm:h-4 text-yellow-300 fill-yellow-300" />
+                <span className="text-xs sm:text-sm font-bold text-white">Trusted by 5,000+ Students</span>
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-extrabold leading-tight tracking-tight">
-                <span className="block text-gray-900">Transform Your</span>
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight">
+                Transform Your{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
                   Learning Journey
                 </span>
               </h1>
 
               {/* Description */}
-              <p className="text-base xs:text-lg sm:text-xl md:text-xl text-gray-700 leading-relaxed max-w-xl font-medium">
-                Interactive <span className="text-blue-600 font-bold">live classes</span> in Art, Chess, Piano, Public Speaking, and more. Designed for students aged <span className="text-purple-600 font-bold">8-18</span>.
+              <p className="text-base sm:text-lg lg:text-xl text-gray-700 leading-relaxed font-medium">
+                Interactive <span className="text-blue-600 font-semibold">live classes</span> in Art, Chess, Piano, Public Speaking, and more. Designed for students passionate about learning.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row gap-4 pt-2">
                 <Link 
                   href="#courses"
-                  className="group inline-flex items-center justify-center gap-2 px-6 xs:px-7 sm:px-8 py-3 xs:py-3.5 sm:py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white text-sm xs:text-base font-bold rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all hover:scale-[1.02] touch-target active:scale-95"
+                  className="group inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white text-sm sm:text-base font-semibold rounded-md hover:shadow-xl hover:shadow-purple-500/40 transition-all hover:scale-105"
                 >
                   Explore Courses
-                  <ArrowRight className="w-4 xs:w-5 h-4 xs:h-5 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link 
                   href="#trial"
-                  className="inline-flex items-center justify-center gap-2 px-6 xs:px-7 sm:px-8 py-3 xs:py-3.5 sm:py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm xs:text-base font-bold rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all hover:scale-[1.02] touch-target active:scale-95"
+                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm sm:text-base font-semibold rounded-md hover:shadow-xl hover:shadow-orange-500/40 transition-all hover:scale-105"
                 >
                   Start Free Trial
                 </Link>
               </div>
 
               {/* Trust Indicators */}
-              <div className="flex items-center gap-3 xs:gap-4 sm:gap-5 md:gap-6 pt-4 flex-wrap">
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg xs:rounded-xl px-3 xs:px-4 py-2 xs:py-3 shadow-md border border-blue-100">
-                  <div className="text-xl xs:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">10,000+</div>
-                  <div className="text-xs xs:text-sm text-gray-700 font-medium">Active Students</div>
+              <div className="flex items-center gap-4 sm:gap-6 pt-4 flex-wrap">
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg px-4 py-3 shadow-md border border-blue-100">
+                  <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">5,000+</div>
+                  <div className="text-sm text-gray-700 font-medium">Active Students</div>
                 </div>
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg xs:rounded-xl px-3 xs:px-4 py-2 xs:py-3 shadow-md border border-purple-100">
-                  <div className="text-xl xs:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">11+</div>
-                  <div className="text-xs xs:text-sm text-gray-700 font-medium">Skill Courses</div>
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg px-4 py-3 shadow-md border border-purple-100">
+                  <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">9+</div>
+                  <div className="text-sm text-gray-700 font-medium">Skill Courses</div>
                 </div>
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg xs:rounded-xl px-3 xs:px-4 py-2 xs:py-3 shadow-md border border-orange-100">
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg px-4 py-3 shadow-md border border-orange-100">
                   <div className="flex items-center gap-1 mb-1">
-                    <Star className="w-4 xs:w-5 h-4 xs:h-5 text-yellow-500 fill-yellow-500" />
-                    <span className="text-xl xs:text-2xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">4.9</span>
+                    <Star className="w-4 sm:w-5 h-4 sm:h-5 text-yellow-500 fill-yellow-500" />
+                    <span className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">4.9</span>
                   </div>
-                  <div className="text-xs xs:text-sm text-gray-700 font-medium">Parent Rating</div>
+                  <div className="text-sm text-gray-700 font-medium">Parent Rating</div>
                 </div>
               </div>
             </div>
 
-            {/* Right Content - 55% */}
-            <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 xs:gap-4 sm:gap-5 md:gap-5 lg:gap-6">
-              {/* Feature Card 1 - Live Classes */}
-              <div className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl sm:rounded-2xl p-5 xs:p-5 sm:p-6 md:p-6 lg:p-7 shadow-xl shadow-blue-500/25 hover:shadow-2xl hover:shadow-blue-500/40 transition-all duration-300 hover:scale-[1.02] min-h-[180px] xs:min-h-[200px] sm:min-h-[220px] flex flex-col">
-                <div className="w-12 h-12 xs:w-12 xs:h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-sm rounded-xl xs:rounded-xl flex items-center justify-center mb-3 xs:mb-3 sm:mb-4 group-hover:bg-white/30 group-hover:scale-110 transition-all flex-shrink-0">
-                  <Users className="w-6 h-6 xs:w-6 xs:h-6 sm:w-7 sm:h-7 text-white" />
+            {/* Right Content - Feature Cards Grid */}
+            <div className="w-full">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6">
+                {/* Feature Card 1 - Live Classes */}
+                <div className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-xl shadow-blue-500/25 hover:shadow-2xl hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex flex-col h-full">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-white/30 group-hover:scale-110 transition-all">
+                    <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-2">Live Classes</h3>
+                  <p className="text-sm text-blue-100 mb-4 flex-grow leading-relaxed">Interactive sessions with expert instructors</p>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 self-start">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    <span className="text-xs font-semibold text-white">Live Now</span>
+                  </div>
                 </div>
-                <h3 className="text-lg xs:text-lg sm:text-xl font-bold text-white mb-2 xs:mb-2 leading-tight">Live Classes</h3>
-                <p className="text-sm xs:text-sm text-white/90 mb-3 xs:mb-3 sm:mb-4 leading-relaxed flex-grow">Interactive sessions with expert instructors</p>
-                <div className="inline-flex items-center gap-1.5 xs:gap-1.5 px-3 xs:px-3 py-1.5 xs:py-1.5 bg-white/25 backdrop-blur-sm rounded-full border border-white/40 self-start shadow-sm">
-                  <div className="w-2 xs:w-2 h-2 xs:h-2 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-xs xs:text-xs font-bold text-white">Live Now</span>
-                </div>
-              </div>
 
-              {/* Feature Card 2 - AI Learning */}
-              <div className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl sm:rounded-2xl p-5 xs:p-5 sm:p-6 md:p-6 lg:p-7 shadow-xl shadow-purple-500/25 hover:shadow-2xl hover:shadow-purple-500/40 transition-all duration-300 hover:scale-[1.02] min-h-[180px] xs:min-h-[200px] sm:min-h-[220px] flex flex-col">
-                <div className="w-12 h-12 xs:w-12 xs:h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-sm rounded-xl xs:rounded-xl flex items-center justify-center mb-3 xs:mb-3 sm:mb-4 group-hover:bg-white/30 group-hover:scale-110 transition-all flex-shrink-0">
-                  <Sparkles className="w-6 h-6 xs:w-6 xs:h-6 sm:w-7 sm:h-7 text-white" />
+                {/* Feature Card 2 - AI Learning */}
+                <div className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-xl shadow-purple-500/25 hover:shadow-2xl hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105 flex flex-col h-full">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-white/30 group-hover:scale-110 transition-all">
+                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-2">AI Learning</h3>
+                  <p className="text-sm text-purple-100 mb-4 flex-grow leading-relaxed">Personalized recommendations for every student</p>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 self-start">
+                    <Sparkles className="w-3 h-3 text-white" />
+                    <span className="text-xs font-semibold text-white">Smart</span>
+                  </div>
                 </div>
-                <h3 className="text-lg xs:text-lg sm:text-xl font-bold text-white mb-2 xs:mb-2 leading-tight">AI Learning</h3>
-                <p className="text-sm xs:text-sm text-white/90 mb-3 xs:mb-3 sm:mb-4 leading-relaxed flex-grow">Personalized recommendations for every student</p>
-                <div className="inline-flex items-center gap-1.5 xs:gap-1.5 px-3 xs:px-3 py-1.5 xs:py-1.5 bg-white/25 backdrop-blur-sm rounded-full border border-white/40 self-start shadow-sm">
-                  <Sparkles className="w-3 xs:w-3 h-3 xs:h-3 text-white" />
-                  <span className="text-xs xs:text-xs font-bold text-white">Smart</span>
-                </div>
-              </div>
 
-              {/* Feature Card 3 - Practice Tests */}
-              <div className="group bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl sm:rounded-2xl p-5 xs:p-5 sm:p-6 md:p-6 lg:p-7 shadow-xl shadow-pink-500/25 hover:shadow-2xl hover:shadow-pink-500/40 transition-all duration-300 hover:scale-[1.02] min-h-[180px] xs:min-h-[200px] sm:min-h-[220px] flex flex-col">
-                <div className="w-12 h-12 xs:w-12 xs:h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-sm rounded-xl xs:rounded-xl flex items-center justify-center mb-3 xs:mb-3 sm:mb-4 group-hover:bg-white/30 group-hover:scale-110 transition-all flex-shrink-0">
-                  <BookOpen className="w-6 h-6 xs:w-6 xs:h-6 sm:w-7 sm:h-7 text-white" />
+                {/* Feature Card 3 - Practice Tests */}
+                <div className="group bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-xl shadow-pink-500/25 hover:shadow-2xl hover:shadow-pink-500/40 transition-all duration-300 hover:scale-105 flex flex-col h-full">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-white/30 group-hover:scale-110 transition-all">
+                    <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-2">Practice Tests</h3>
+                  <p className="text-sm text-pink-100 mb-4 flex-grow leading-relaxed">Master skills with interactive exercises</p>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 self-start">
+                    <Target className="w-3 h-3 text-white" />
+                    <span className="text-xs font-semibold text-white">Interactive</span>
+                  </div>
                 </div>
-                <h3 className="text-lg xs:text-lg sm:text-xl font-bold text-white mb-2 xs:mb-2 leading-tight">Practice Tests</h3>
-                <p className="text-sm xs:text-sm text-white/90 mb-3 xs:mb-3 sm:mb-4 leading-relaxed flex-grow">Master skills with interactive exercises</p>
-                <div className="inline-flex items-center gap-1.5 xs:gap-1.5 px-3 xs:px-3 py-1.5 xs:py-1.5 bg-white/25 backdrop-blur-sm rounded-full border border-white/40 self-start shadow-sm">
-                  <Target className="w-3 xs:w-3 h-3 xs:h-3 text-white" />
-                  <span className="text-xs xs:text-xs font-bold text-white">Interactive</span>
-                </div>
-              </div>
 
-              {/* Feature Card 4 - Progress Tracker */}
-              <div className="group bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl sm:rounded-2xl p-5 xs:p-5 sm:p-6 md:p-6 lg:p-7 shadow-xl shadow-orange-500/25 hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 hover:scale-[1.02] min-h-[180px] xs:min-h-[200px] sm:min-h-[220px] flex flex-col">
-                <div className="w-12 h-12 xs:w-12 xs:h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-sm rounded-xl xs:rounded-xl flex items-center justify-center mb-3 xs:mb-3 sm:mb-4 group-hover:bg-white/30 group-hover:scale-110 transition-all flex-shrink-0">
-                  <TrendingUp className="w-6 h-6 xs:w-6 xs:h-6 sm:w-7 sm:h-7 text-white" />
-                </div>
-                <h3 className="text-lg xs:text-lg sm:text-xl font-bold text-white mb-2 xs:mb-2 leading-tight">Progress Tracker</h3>
-                <p className="text-sm xs:text-sm text-white/90 mb-3 xs:mb-3 sm:mb-4 leading-relaxed flex-grow">Monitor growth with detailed analytics</p>
-                <div className="inline-flex items-center gap-1.5 xs:gap-1.5 px-3 xs:px-3 py-1.5 xs:py-1.5 bg-white/25 backdrop-blur-sm rounded-full border border-white/40 self-start shadow-sm">
-                  <Trophy className="w-3 xs:w-3 h-3 xs:h-3 text-white" />
-                  <span className="text-xs xs:text-xs font-bold text-white">Track Growth</span>
+                {/* Feature Card 4 - Progress Tracker */}
+                <div className="group bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-xl shadow-orange-500/25 hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 hover:scale-105 flex flex-col h-full">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-white/30 group-hover:scale-110 transition-all">
+                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-2">Progress Tracker</h3>
+                  <p className="text-sm text-orange-100 mb-4 flex-grow leading-relaxed">Monitor growth with detailed analytics</p>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 self-start">
+                    <Trophy className="w-3 h-3 text-white" />
+                    <span className="text-xs font-semibold text-white">Track Growth</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -392,7 +450,7 @@ export default function Home() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-5 sm:gap-6 md:gap-7 lg:gap-8">
             {[
               { 
-                number: "10,000+", 
+                number: "5,000+", 
                 label: "Happy Students", 
                 subtext: "Learning Daily", 
                 gradient: "from-cyan-400 via-blue-400 to-blue-500", 
@@ -408,7 +466,7 @@ export default function Home() {
                 iconBg: "from-pink-500 to-rose-500"
               },
               { 
-                number: "11+", 
+                number: "9+", 
                 label: "Skill Courses", 
                 subtext: "And Growing", 
                 gradient: "from-amber-400 via-orange-400 to-orange-500", 
@@ -460,6 +518,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Courses Section - All Available Courses */}
+      <CoursesSection />
 
       {/* Find Your Best Courses Section */}
       <CourseRecommendationSection />
@@ -554,22 +615,12 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Premium CTA */}
-          <div className="text-center mt-16 lg:mt-20">
-            <Link 
-              href="#trial" 
-              className="group inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white text-lg font-bold rounded-2xl hover:shadow-2xl hover:shadow-purple-500/50 transition-all hover:scale-105 shadow-xl relative overflow-hidden"
-            >
-              <span className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 transition-opacity"></span>
-              <span className="relative">Start Your Free Trial Now</span>
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform relative" />
-            </Link>
-          </div>
+
         </div>
       </section>
 
       {/* Course Section - Vibrant Colorful Cards */}
-      <section id="courses" className="py-12 sm:py-14 md:py-16 lg:py-20 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 relative overflow-hidden">
+      <section id="courses" className="py-12 sm:py-14 md:py-16 lg:py-20 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 relative overflow-hidden scroll-mt-16">
         {/* Decorative Elements */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-pink-400 to-rose-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
@@ -580,29 +631,21 @@ export default function Home() {
             <div className="text-center mb-8 sm:mb-10 md:mb-12 lg:mb-16">
               <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-sm font-bold mb-6 shadow-lg shadow-purple-500/30">
                 <Star className="w-5 h-5 fill-yellow-300 text-yellow-300" />
-                11+ Courses Available ✨
+                3 Courses Coming Soon ✨
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 sm:mb-5 px-2">
-                Explore Our Skill Development Courses
+                Upcoming Courses
               </h2>
               <p className="text-lg sm:text-xl md:text-2xl text-gray-700 font-medium max-w-3xl mx-auto px-3">
-                Live online classes designed to nurture <span className="text-purple-600 font-bold">creativity</span>, <span className="text-pink-600 font-bold">confidence</span>, and <span className="text-blue-600 font-bold">critical thinking</span>
+                New courses launching soon to help your child excel
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 md:gap-7 lg:gap-8">
               {[
-                { title: "Art & Drawing", age: "Ages 5-15", gradient: "from-rose-500 to-pink-600", icon: "🎨", bgPattern: "from-rose-50 via-pink-50 to-rose-100", description: "Unleash creativity on canvas" },
-                { title: "Chess", age: "Ages 6-16", gradient: "from-slate-700 to-gray-900", icon: "♟️", bgPattern: "from-slate-50 via-gray-50 to-slate-100", description: "Master strategic thinking" },
-                { title: "Piano", age: "Ages 5-15", gradient: "from-violet-500 to-purple-600", icon: "🎹", bgPattern: "from-violet-50 via-purple-50 to-violet-100", description: "Create beautiful melodies" },
-                { title: "Phonics", age: "Ages 4-8", gradient: "from-sky-500 to-blue-600", icon: "🅰️", bgPattern: "from-sky-50 via-blue-50 to-sky-100", description: "Build reading confidence" },
-                { title: "Public Speaking", age: "Ages 7-17", gradient: "from-emerald-500 to-green-600", icon: "🎤", bgPattern: "from-emerald-50 via-green-50 to-emerald-100", description: "Speak with confidence" },
-                { title: "Abacus", age: "Ages 5-12", gradient: "from-amber-500 to-orange-600", icon: "🧮", bgPattern: "from-amber-50 via-orange-50 to-amber-100", description: "Lightning-fast mental math" },
-                { title: "Reader's Club", age: "Ages 6-14", gradient: "from-orange-500 to-red-600", icon: "📚", bgPattern: "from-orange-50 via-red-50 to-orange-100", description: "Discover reading joy" },
-                { title: "Toastmaster", age: "Ages 10-17", gradient: "from-teal-500 to-cyan-600", icon: "🗣️", bgPattern: "from-teal-50 via-cyan-50 to-teal-100", description: "Lead and inspire others" },
-                { title: "Sholak", age: "Ages 7-15", gradient: "from-indigo-500 to-purple-600", icon: "🎯", bgPattern: "from-indigo-50 via-purple-50 to-indigo-100", description: "Ancient wisdom meets modern" },
-                { title: "Computers", age: "Ages 8-16", gradient: "from-blue-500 to-cyan-600", icon: "💻", bgPattern: "from-blue-50 via-cyan-50 to-blue-100", description: "Code the future" },
-                { title: "Rubiks Cube", age: "Ages 6-14", gradient: "from-fuchsia-500 to-pink-600", icon: "🧩", bgPattern: "from-fuchsia-50 via-pink-50 to-fuchsia-100", description: "Puzzle-solving genius" }
+                { title: "Grammar", gradient: "from-emerald-500 to-green-600", icon: "📝", bgPattern: "from-emerald-50 via-green-50 to-emerald-100", description: "Master language and communication skills" },
+                { title: "Art and Craft", gradient: "from-rose-500 to-pink-600", icon: "🎨", bgPattern: "from-rose-50 via-pink-50 to-rose-100", description: "Create beautiful handmade crafts" },
+                { title: "Maths", gradient: "from-blue-500 to-indigo-600", icon: "🔢", bgPattern: "from-blue-50 via-indigo-50 to-blue-100", description: "Build strong mathematical foundations" }
               ].map((course, i) => (
                 <div key={i} className={`group relative bg-gradient-to-br ${course.bgPattern} rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-3 border-2 border-white hover:border-white/50`}>
                   {/* Animated Gradient Overlay */}
@@ -626,10 +669,6 @@ export default function Home() {
                       <div>
                         <h3 className="font-bold text-gray-900 mb-3 text-xl md:text-2xl leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:${course.gradient} transition-all">{course.title}</h3>
                         <p className="text-sm text-gray-600 mb-3">{course.description}</p>
-                        <div className={`inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${course.gradient} text-white text-sm font-bold rounded-full shadow-lg`}>
-                          <Users className="w-4 h-4" />
-                          {course.age}
-                        </div>
                       </div>
                       
                       <button className="group/btn inline-flex items-center gap-2 text-sm font-bold text-gray-700 hover:text-gray-900 transition-colors">
@@ -652,231 +691,6 @@ export default function Home() {
                 Enroll in Your First Course
                 <ArrowRight className="w-5 h-5" />
               </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section - Mobile Optimized */}
-      <section className="py-8 sm:py-10 md:py-12 lg:py-16 bg-white">
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 items-center">
-              {/* Left - Visual */}
-              <div className="relative">
-                <div className="aspect-square max-w-xs sm:max-w-sm md:max-w-md mx-auto rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center p-6 sm:p-8 md:p-10 lg:p-12">
-                  <div className="text-center space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 mx-auto bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-                      <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-white" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Expert Learning</h3>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right - Content */}
-              <div className="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">
-                  Discover Unique Learning Experiences
-                </h2>
-                <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed">
-                  From artistic expression through Art & Drawing to strategic thinking with Chess, from musical mastery with Piano to mental math with Abacus - we offer diverse courses that spark curiosity and build lifelong skills.
-                </p>
-                <Link 
-                  href="#trial"
-                  className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-white border-2 border-gray-900 text-gray-900 text-xs sm:text-sm md:text-base font-medium rounded-md hover:bg-gray-50 transition-colors touch-target w-full sm:w-auto"
-                >
-                  START YOUR FREE TRIAL
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Skills Development Section - Mobile Optimized */}
-      <section className="py-8 sm:py-10 md:py-12 lg:py-16 bg-dark-900 text-white">
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 items-center">
-              {/* Left - Visual */}
-              <div className="relative order-2 lg:order-1">
-                <div className="aspect-[4/3] rounded-xl sm:rounded-2xl overflow-hidden bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center p-4 sm:p-6 md:p-8">
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 w-full max-w-xs sm:max-w-sm">
-                    <div className="aspect-square bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-white" />
-                    </div>
-                    <div className="aspect-square bg-gradient-to-br from-purple-400 to-purple-500 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center">
-                      <Award className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-white" />
-                    </div>
-                    <div className="aspect-square bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center">
-                      <Trophy className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-white" />
-                    </div>
-                    <div className="aspect-square bg-gradient-to-br from-orange-400 to-orange-500 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center">
-                      <Star className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-white" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right - Content */}
-              <div className="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6 order-1 lg:order-2">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">
-                  Build Skills Beyond Academics
-                </h2>
-                <p className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed">
-                  Our courses help children develop creativity through Art, strategic thinking with Chess, musical talent via Piano, public confidence through Speaking, and computational speed with Abacus - essential skills for the 21st century.
-                </p>
-                <div className="flex flex-wrap gap-2 sm:gap-2.5 md:gap-3 text-[10px] sm:text-xs md:text-sm text-gray-300">
-                  <span className="px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 bg-white/10 rounded">Creative Arts</span>
-                  <span className="px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 bg-white/10 rounded">Strategic Thinking</span>
-                  <span className="px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 bg-white/10 rounded">Music & Performance</span>
-                </div>
-                <Link 
-                  href="#trial"
-                  className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-white text-dark-900 text-xs sm:text-sm md:text-base font-medium rounded-md hover:bg-gray-100 transition-colors touch-target w-full sm:w-auto"
-                >
-                  EXPLORE PROGRAMS
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Global Community Section - Mobile Optimized */}
-      <section className="py-8 sm:py-10 md:py-12 lg:py-16 bg-dark-900 text-white">
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 items-center">
-              {/* Left - Visual (Abstract Pattern) */}
-              <div className="space-y-3 sm:space-y-4 md:space-y-6">
-                <div ref={gridRef} className="grid grid-cols-8 gap-0.5 sm:gap-1 max-w-xs sm:max-w-sm mx-auto lg:mx-0">
-                  {Array.from({ length: 64 }).map((_, i) => (
-                    <div 
-                      key={i} 
-                      className="aspect-square rounded community-grid-item"
-                    />
-                  ))}
-                </div>
-                <div className="flex gap-2 sm:gap-3 md:gap-4 justify-center lg:justify-start">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Right - Content */}
-              <div className="space-y-3 sm:space-y-4 md:space-y-5 text-center lg:text-left">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">
-                  Join Thousands of Young Learners
-                </h2>
-                <p className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed">
-                  Students from across India are mastering Art, Chess, Piano, Public Speaking, Abacus, and more through our live online classes
-                </p>
-                <Link 
-                  href="#trial"
-                  className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 bg-white text-dark-900 text-xs sm:text-sm md:text-base font-medium rounded-md hover:bg-gray-100 transition-colors touch-target w-full sm:w-auto"
-                >
-                  START YOUR FREE TRIAL
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Curriculum Section - Mobile Optimized */}
-      <section className="py-8 sm:py-10 md:py-12 lg:py-16 xl:py-20 bg-gradient-to-b from-yellow-500 to-yellow-600 w-full overflow-hidden">
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 items-center">
-              {/* Left - Curriculum Icons - Better Mobile Grid */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-5">
-                {[
-                  { icon: "🎨", label: "ART & DRAWING" },
-                  { icon: "♟️", label: "CHESS" },
-                  { icon: "🎹", label: "PIANO" },
-                  { icon: "🅰️", label: "PHONICS" },
-                  { icon: "🎤", label: "PUBLIC SPEAKING" },
-                  { icon: "🧮", label: "ABACUS" },
-                  { icon: "📚", label: "READER'S CLUB" },
-                  { icon: "🗣️", label: "TOASTMASTER" },
-                  { icon: "🎯", label: "SHOLAK" },
-                  { icon: "💻", label: "COMPUTERS" },
-                  { icon: "🧩", label: "RUBIKS CUBE" },
-                  { icon: "🎓", label: "MORE COMING" },
-                  { icon: "✨", label: "CREATIVITY" },
-                  { icon: "🧠", label: "LOGIC" },
-                  { icon: "📈", label: "GROWTH" },
-                  { icon: "🌟", label: "EXCELLENCE" }
-                ].map((item, i) => (
-                  <div key={i} className="bg-white rounded-md sm:rounded-lg p-2 sm:p-3 md:p-4 lg:p-5 text-center space-y-1 sm:space-y-1.5 md:space-y-2 hover:shadow-md transition-shadow">
-                    <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl">{item.icon}</div>
-                    <div className="text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs font-semibold text-gray-900 leading-tight break-words">
-                      {item.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Right - Content */}
-              <div className="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white leading-tight">
-                  Expert-Led Courses by Certified Instructors
-                </h2>
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-yellow-100 leading-relaxed">
-                  Our carefully crafted curriculum spans creative arts, strategic games, music, communication, and cognitive development
-                </p>
-                <p className="text-xs sm:text-sm md:text-base lg:text-lg text-yellow-100 leading-relaxed">
-                  Each course is designed to build confidence, creativity, and critical thinking in a fun, engaging online environment
-                </p>
-                <Link 
-                  href="#trial"
-                  className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 md:px-7 lg:px-8 py-2.5 sm:py-3 md:py-3.5 lg:py-4 bg-white text-yellow-700 font-semibold rounded-md hover:bg-gray-50 transition-colors text-xs sm:text-sm md:text-base lg:text-lg touch-target w-full sm:w-auto"
-                >
-                  START YOUR FREE TRIAL
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Activities Section - Mobile Optimized */}
-      <section className="py-8 sm:py-10 md:py-12 lg:py-16 bg-gradient-to-b from-blue-600 to-blue-700 text-white">
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-6 sm:mb-8 md:mb-10">
-              <p className="text-[10px] sm:text-xs md:text-sm font-medium text-blue-200 mb-2 sm:mb-3 md:mb-4">
-                EXPLORE OUR DIVERSE SKILL CATEGORIES
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
-              {[
-                { icon: "🎨", label: "ART STUDIO" },
-                { icon: "♟️", label: "CHESS ACADEMY" },
-                { icon: "🎹", label: "MUSIC ROOM" },
-                { icon: "🎤", label: "SPEAKING LAB" },
-                { icon: "🧮", label: "MATH HUB" },
-                { icon: "💻", label: "TECH ZONE" }
-              ].map((activity, i) => (
-                <div key={i} className="text-center space-y-2 sm:space-y-3">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 mx-auto bg-white/10 rounded-full flex items-center justify-center text-xl sm:text-2xl md:text-3xl border-2 sm:border-3 md:border-4 border-white/20">
-                    {activity.icon}
-                  </div>
-                  <div className="text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase leading-tight px-1">
-                    {activity.label}
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -910,7 +724,6 @@ export default function Home() {
               {[
                 { 
                   name: "Ananya Sharma", 
-                  age: "10 years", 
                   location: "Mumbai", 
                   course: "Art Champion", 
                   quote: "I never imagined I could draw like this! My teacher helped me discover my artistic side, and now I love creating art every day.",
@@ -920,7 +733,6 @@ export default function Home() {
                 },
                 { 
                   name: "Rohan Patel", 
-                  age: "12 years", 
                   location: "Delhi", 
                   course: "Chess Master", 
                   quote: "Chess taught me to think ahead and solve problems. Now I'm winning tournaments and even teaching my friends!",
@@ -930,7 +742,6 @@ export default function Home() {
                 },
                 { 
                   name: "Priya Reddy", 
-                  age: "9 years", 
                   location: "Bangalore", 
                   course: "Piano Prodigy", 
                   quote: "Playing piano brings me so much joy! I performed at my school's annual function and everyone loved it.",
@@ -940,7 +751,6 @@ export default function Home() {
                 },
                 {
                   name: "Mrs. Kapoor",
-                  age: "Parent",
                   location: "Pune",
                   course: "Public Speaking Student",
                   quote: "My son was extremely shy. After joining the Public Speaking course, his confidence has skyrocketed. Thank you Playfit!",
@@ -950,7 +760,6 @@ export default function Home() {
                 },
                 {
                   name: "Aarav Kumar",
-                  age: "11 years",
                   location: "Hyderabad",
                   course: "Abacus Champion",
                   quote: "Mental math is now my superpower! I can calculate faster than calculators and it's so much fun.",
@@ -960,7 +769,6 @@ export default function Home() {
                 },
                 {
                   name: "Mr. & Mrs. Singh",
-                  age: "Parents",
                   location: "Kolkata",
                   course: "Piano Students",
                   quote: "Both our daughters take piano lessons. The teachers are patient, skilled, and genuinely care about their progress.",
@@ -970,9 +778,6 @@ export default function Home() {
                 }
               ].map((testimonial, i) => (
                 <div key={i} className="group bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-white hover:border-purple-200">
-                  {/* Quote Mark */}
-                  <div className="text-6xl text-purple-200 leading-none mb-4">"</div>
-                  
                   {/* Quote Text */}
                   <p className="text-gray-700 leading-relaxed mb-6 text-base">
                     {testimonial.quote}
@@ -992,7 +797,7 @@ export default function Home() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-gray-900 text-base truncate">{testimonial.name}</h4>
-                      <p className="text-sm text-gray-600">{testimonial.age} • {testimonial.location}</p>
+                      <p className="text-sm text-gray-600">{testimonial.location}</p>
                       <p className={`text-sm font-semibold bg-gradient-to-r ${testimonial.gradient} bg-clip-text text-transparent`}>
                         {testimonial.course}
                       </p>
@@ -1008,7 +813,7 @@ export default function Home() {
                 { icon: "⭐", number: "4.9/5", label: "Average Rating" },
                 { icon: "💬", number: "500+", label: "Happy Reviews" },
                 { icon: "🏆", number: "98%", label: "Recommend Us" },
-                { icon: "❤️", number: "10K+", label: "Satisfied Families" }
+                { icon: "❤️", number: "5K+", label: "Satisfied Families" }
               ].map((stat, i) => (
                 <div key={i} className="text-center">
                   <div className="text-4xl mb-2">{stat.icon}</div>
@@ -1021,78 +826,165 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Why Parents Trust Us - Benefits Section */}
-      <section className="py-16 sm:py-20 md:py-24 bg-white">
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
+      {/* Reviews Section - Approved Reviews from Database */}
+      <ReviewsSection />
+
+      {/* Write a Review Section */}
+      <WriteReview />
+
+      {/* About Playfit Section */}
+      <section id="about" className="py-16 sm:py-20 md:py-24 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 scroll-mt-16 relative overflow-hidden">
+        {/* Background Decoration */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-pink-400/10 to-orange-400/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="relative w-full px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
+            {/* About Playfit Header */}
             <div className="text-center mb-12 md:mb-16">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Why 10,000+ Parents Choose Us
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full mb-6">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                <span className="text-sm font-semibold text-purple-900">About Playfit</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6 pb-2 leading-tight">
+                Joyful Learning for Young Minds
               </h2>
-              <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                We're committed to providing the best online learning experience for your child
+            </div>
+
+            {/* Mission Statement */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 md:p-12 shadow-xl mb-12 border-2 border-white">
+              <p className="text-lg md:text-xl text-gray-700 leading-relaxed text-center mb-6">
+                <strong className="text-purple-600">Playfit</strong> is a fun and engaging learning platform designed to help young children build <strong>confidence</strong>, <strong>communication skills</strong>, <strong>reading habits</strong>, <strong>grammar understanding</strong>, and <strong>creative thinking</strong>. Our programs are carefully created for early learners with age-appropriate lessons, interactive activities, games, stories, worksheets, and practice sessions.
+              </p>
+              <p className="text-lg md:text-xl text-gray-700 leading-relaxed text-center mb-6">
+                At Playfit, we believe that <strong className="text-pink-600">learning should be joyful, active, and meaningful</strong>. Each session is designed to make children participate, speak, think, read, and express themselves with confidence. Our child-friendly approach helps learners enjoy every class while developing strong foundational skills for school and life.
+              </p>
+              <p className="text-xl md:text-2xl font-bold text-center bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Playfit aims to make every child a confident learner, active thinker, and happy communicator.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: <Users className="w-8 h-8" />,
-                  title: "Small Class Sizes",
-                  description: "Maximum 8 students per class ensures personalized attention for every child",
-                  color: "from-blue-500 to-cyan-500"
-                },
-                {
-                  icon: <Target className="w-8 h-8" />,
-                  title: "Certified Instructors",
-                  description: "Every teacher is professionally trained, background-verified, and passionate about teaching",
-                  color: "from-purple-500 to-pink-500"
-                },
-                {
-                  icon: <Zap className="w-8 h-8" />,
-                  title: "Live Interactive Classes",
-                  description: "Real-time interaction with teachers and peers, not pre-recorded videos",
-                  color: "from-orange-500 to-red-500"
-                },
-                {
-                  icon: <CheckCircle className="w-8 h-8" />,
-                  title: "Flexible Scheduling",
-                  description: "Choose class timings that work best for your family's schedule",
-                  color: "from-green-500 to-emerald-500"
-                },
-                {
-                  icon: <Trophy className="w-8 h-8" />,
-                  title: "Progress Tracking",
-                  description: "Regular assessments and detailed progress reports to track your child's growth",
-                  color: "from-amber-500 to-orange-500"
-                },
-                {
-                  icon: <Heart className="w-8 h-8" />,
-                  title: "100% Satisfaction",
-                  description: "98% parent satisfaction rate with option to switch classes if needed",
-                  color: "from-pink-500 to-rose-500"
-                }
-              ].map((benefit, i) => (
-                <div key={i} className="group relative">
-                  <div className={`absolute inset-0 bg-gradient-to-r ${benefit.color} opacity-0 group-hover:opacity-5 rounded-3xl transition-opacity`}></div>
-                  <div className="relative bg-white border-2 border-gray-100 rounded-3xl p-8 hover:border-gray-200 transition-all hover:shadow-lg">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${benefit.color} rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-lg`}>
-                      {benefit.icon}
+            {/* Meet the Founders Section */}
+            <div className="mb-16">
+              <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">
+                Meet the Founders
+              </h3>
+              
+              <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+                {/* Founder 1 - Puja Agarwal */}
+                <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-white hover:border-purple-200">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg ring-4 ring-purple-100">
+                      <img
+                        src="/images/puja.jpg"
+                        alt="Puja Agarwal"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">{benefit.title}</h3>
-                    <p className="text-gray-600 leading-relaxed">{benefit.description}</p>
+                    <div>
+                      <h4 className="text-2xl font-bold text-gray-900">Puja Agarwal</h4>
+                      <p className="text-purple-600 font-semibold">Co-founder, COO & Lead Educator</p>
+                    </div>
                   </div>
+                  <p className="text-gray-700 leading-relaxed mb-4">
+                    Puja Agarwal is an experienced educator with <strong>over 15 years of teaching experience</strong> in both online and offline learning environments globally. She is a graduate and holds a <strong>Phonics Teacher's Degree</strong>, with strong expertise in early reading, phonics, language development, and child-friendly teaching methods.
+                  </p>
+                  <p className="text-gray-700 leading-relaxed">
+                    With her passion for education, Puja Agarwal has helped young learners build confidence, improve communication, and develop strong foundational skills through engaging lessons, stories, activities, and interactive learning. Her vision behind Playfit is to create a joyful and meaningful learning space where every child feels encouraged to read, speak, think, and express with confidence.
+                  </p>
                 </div>
-              ))}
+
+                {/* Founder 2 - Sonika Goel */}
+                <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-white hover:border-blue-200">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg ring-4 ring-blue-100">
+                      <img
+                        src="/images/sonika.jpg"
+                        alt="Sonika Goel"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-2xl font-bold text-gray-900">Sonika Goel</h4>
+                      <p className="text-blue-600 font-semibold">Co-founder & CEO</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed mb-4">
+                    Sonika Goel is a marketing professional with a <strong>postgraduate degree in Marketing</strong> and <strong>over 10 years of industry experience</strong>. She also holds certifications in Public Speaking and a diploma in French, reflecting her strong communication skills and interest in continuous learning.
+                  </p>
+                  <p className="text-gray-700 leading-relaxed">
+                    With her experience in marketing, communication, and brand development, Sonika brings a creative and strategic vision to Playfit. She is passionate about building engaging learning experiences that are meaningful, accessible, and enjoyable for children. Through Playfit, her vision is to create a trusted learning platform that supports children in becoming confident speakers, curious learners, and independent thinkers.
+                  </p>
+                </div>
+              </div>
             </div>
 
+            {/* Why Parents Trust Us - Benefits Grid */}
+            <div>
+              <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">
+                Why 10,000+ Parents Choose Us
+              </h3>
 
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[
+                  {
+                    icon: <Users className="w-8 h-8" />,
+                    title: "Small Class Sizes",
+                    description: "Maximum 8 students per class ensures personalized attention for every child",
+                    color: "from-blue-500 to-cyan-500"
+                  },
+                  {
+                    icon: <Target className="w-8 h-8" />,
+                    title: "Certified Instructors",
+                    description: "Every teacher is professionally trained, background-verified, and passionate about teaching",
+                    color: "from-purple-500 to-pink-500"
+                  },
+                  {
+                    icon: <Zap className="w-8 h-8" />,
+                    title: "Live Interactive Classes",
+                    description: "Real-time interaction with teachers and peers, not pre-recorded videos",
+                    color: "from-orange-500 to-red-500"
+                  },
+                  {
+                    icon: <CheckCircle className="w-8 h-8" />,
+                    title: "Flexible Scheduling",
+                    description: "Choose class timings that work best for your family's schedule",
+                    color: "from-green-500 to-emerald-500"
+                  },
+                  {
+                    icon: <Trophy className="w-8 h-8" />,
+                    title: "Progress Tracking",
+                    description: "Regular assessments and detailed progress reports to track your child's growth",
+                    color: "from-amber-500 to-orange-500"
+                  },
+                  {
+                    icon: <Heart className="w-8 h-8" />,
+                    title: "100% Satisfaction",
+                    description: "98% parent satisfaction rate with option to switch classes if needed",
+                    color: "from-pink-500 to-rose-500"
+                  }
+                ].map((benefit, i) => (
+                  <div key={i} className="group relative h-full">
+                    <div className={`absolute inset-0 bg-gradient-to-r ${benefit.color} opacity-0 group-hover:opacity-5 rounded-3xl transition-opacity`}></div>
+                    <div className="relative h-full bg-white border-2 border-gray-100 rounded-3xl p-8 hover:border-gray-200 transition-all hover:shadow-lg flex flex-col">
+                      <div className={`w-16 h-16 bg-gradient-to-br ${benefit.color} rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-lg`}>
+                        {benefit.icon}
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-3">{benefit.title}</h3>
+                      <p className="text-gray-600 leading-relaxed flex-grow">{benefit.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section - Enhanced Book Free Trial */}
-      <section id="trial" className="py-16 sm:py-20 md:py-24 lg:py-28 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 relative overflow-hidden safe-bottom">
+      <section id="trial" className="py-16 sm:py-20 md:py-24 lg:py-28 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 relative overflow-hidden safe-bottom scroll-mt-16">
         {/* Animated Background */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
@@ -1141,18 +1033,33 @@ export default function Home() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-semibold text-gray-900 mb-2">
+                      <label htmlFor="parentName" className="block text-sm font-semibold text-gray-900 mb-2">
                         Parent's Full Name *
                       </label>
                       <input
                         type="text"
-                        id="name"
-                        name="name"
+                        id="parentName"
+                        name="parentName"
                         required
-                        value={formData.name}
+                        value={formData.parentName}
                         onChange={handleChange}
                         className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
                         placeholder="Enter your full name"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="childName" className="block text-sm font-semibold text-gray-900 mb-2">
+                        Child's Name
+                      </label>
+                      <input
+                        type="text"
+                        id="childName"
+                        name="childName"
+                        value={formData.childName}
+                        onChange={handleChange}
+                        className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
+                        placeholder="Enter child's name"
                       />
                     </div>
 
@@ -1168,7 +1075,6 @@ export default function Home() {
                         value={formData.email}
                         onChange={handleChange}
                         className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
-                        placeholder="your@email.com"
                       />
                     </div>
 
@@ -1184,34 +1090,19 @@ export default function Home() {
                         value={formData.phone}
                         onChange={handleChange}
                         className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
-                        placeholder="+91 98765 43210"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="grade" className="block text-sm font-semibold text-gray-900 mb-2">
-                        Child's Age / Grade *
-                      </label>
-                      <input
-                        type="text"
-                        id="grade"
-                        name="grade"
-                        required
-                        value={formData.grade}
-                        onChange={handleChange}
-                        className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
-                        placeholder="e.g., 10 years / Grade 5"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="course" className="block text-sm font-semibold text-gray-900 mb-2">
+                    <label htmlFor="courseInterest" className="block text-sm font-semibold text-gray-900 mb-2">
                       Which course interests you? (Optional)
                     </label>
                     <select
-                      id="course"
-                      name="course"
+                      id="courseInterest"
+                      name="courseInterest"
+                      value={formData.courseInterest}
+                      onChange={handleChange}
                       className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
                     >
                       <option value="">Select a course</option>
@@ -1226,7 +1117,23 @@ export default function Home() {
                       <option value="sholak">🎯 Sholak</option>
                       <option value="computers">💻 Computers</option>
                       <option value="rubiks">🧩 Rubik's Cube</option>
+                      <option value="ai">🤖 AI & Machine Learning</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="message" className="block text-sm font-semibold text-gray-900 mb-2">
+                      Additional Message (Optional)
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      rows={4}
+                      value={formData.message}
+                      onChange={handleChange}
+                      className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition resize-none"
+                      placeholder="Any specific questions or requirements?"
+                    ></textarea>
                   </div>
 
                   <button
@@ -1277,6 +1184,98 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Contact Us Section - Contact Info Only */}
+      <section id="contact" className="py-16 sm:py-20 md:py-24 bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 text-white relative overflow-hidden scroll-mt-16">
+        {/* Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="relative w-full px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-12 md:mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
+                <Mail className="w-5 h-5 text-blue-400" />
+                <span className="text-sm font-semibold">Get in Touch</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+                We'd Love to Hear From You!
+              </h2>
+              <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
+                Have questions about our courses or need help choosing the right program for your child? The Playfit team is always happy to help.
+              </p>
+            </div>
+
+            {/* Contact Info Grid */}
+            <div className="grid md:grid-cols-3 gap-8 mb-12">
+              {/* Phone */}
+              <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                  <Phone className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Phone</h3>
+                <a href="tel:+918910484299" className="text-gray-300 hover:text-green-400 transition-colors text-lg">
+                  +91 8910484299
+                </a>
+              </div>
+
+              {/* Email */}
+              <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                  <Mail className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Email</h3>
+                <a href="mailto:cplayfit@gmail.com" className="text-gray-300 hover:text-blue-400 transition-colors text-lg break-all">
+                  cplayfit@gmail.com
+                </a>
+              </div>
+
+              {/* Visit Us */}
+              <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                  <Target className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Visit Us</h3>
+                <p className="text-gray-300 text-base leading-relaxed">
+                  18, Rabindra Sarani, Terita Bazar<br />
+                  Poddar Court, 4th floor, Tiretti<br />
+                  Kolkata, West Bengal 700012
+                </p>
+              </div>
+            </div>
+
+            {/* CTA to Trial Form */}
+            <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-white/10 text-center">
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">Ready to Get Started?</h3>
+              <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
+                Book a free trial class to experience our interactive learning approach. Use the form below to request your trial session.
+              </p>
+              <a 
+                href="#trial"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white text-lg font-bold rounded-2xl hover:shadow-2xl hover:shadow-purple-500/50 transition-all hover:scale-105 shadow-xl"
+              >
+                <Sparkles className="w-5 h-5" />
+                Book Your Free Trial
+                <ArrowRight className="w-5 h-5" />
+              </a>
+            </div>
+
+            {/* Stay Connected */}
+            <div className="mt-16 text-center">
+              <h3 className="text-2xl font-bold mb-4">Stay Connected With Playfit</h3>
+              <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
+                Connect with us for course updates, learning tips, activity ideas, and exciting announcements.
+              </p>
+              <p className="text-lg text-gray-400">
+                At Playfit, we are committed to making learning joyful, interactive, and meaningful for every child.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer - Enhanced with Color */}
       <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-8 sm:py-10 md:py-12 lg:py-16 safe-bottom relative overflow-hidden">
         {/* Decorative Background Elements */}
@@ -1290,7 +1289,7 @@ export default function Home() {
               <div>
                 <Link href="/" className="inline-block mb-3 sm:mb-4">
                   <img
-                    src="/images/playfit-logo.jpg"
+                    src="/logo.jpg"
                     alt="Playfit"
                     className="h-10 sm:h-12 md:h-14 w-auto object-contain"
                   />
@@ -1324,9 +1323,9 @@ export default function Home() {
                 </h4>
                 <ul className="space-y-1.5 sm:space-y-2">
                   <li><Link href="#about" className="text-xs sm:text-sm text-gray-300 hover:text-purple-400 transition-colors block py-1 hover:translate-x-1 transition-transform">About Us</Link></li>
-                  <li><Link href="#trial" className="text-xs sm:text-sm text-gray-300 hover:text-blue-400 transition-colors block py-1 hover:translate-x-1 transition-transform">Free Trial</Link></li>
-                  <li><Link href="/login" className="text-xs sm:text-sm text-gray-300 hover:text-pink-400 transition-colors block py-1 hover:translate-x-1 transition-transform">Student Login</Link></li>
-                  <li><a href="#" className="text-xs sm:text-sm text-gray-300 hover:text-green-400 transition-colors block py-1 hover:translate-x-1 transition-transform">FAQs</a></li>
+                  <li><Link href="#contact" className="text-xs sm:text-sm text-gray-300 hover:text-blue-400 transition-colors block py-1 hover:translate-x-1 transition-transform">Contact Us</Link></li>
+                  <li><Link href="#trial" className="text-xs sm:text-sm text-gray-300 hover:text-pink-400 transition-colors block py-1 hover:translate-x-1 transition-transform">Free Trial</Link></li>
+                  <li><Link href="/login" className="text-xs sm:text-sm text-gray-300 hover:text-green-400 transition-colors block py-1 hover:translate-x-1 transition-transform">Student Login</Link></li>
                   <li><a href="#" className="text-xs sm:text-sm text-gray-300 hover:text-amber-400 transition-colors block py-1 hover:translate-x-1 transition-transform">Help Center</a></li>
                 </ul>
               </div>
@@ -1340,19 +1339,19 @@ export default function Home() {
                 <ul className="space-y-2 sm:space-y-3">
                   <li className="flex items-start gap-2 text-xs sm:text-sm text-gray-300 group">
                     <Mail className="w-4 h-4 flex-shrink-0 mt-0.5 group-hover:text-blue-400 transition-colors" />
-                    <span className="break-all group-hover:text-blue-400 transition-colors">support@playfit.com</span>
+                    <a href="mailto:cplayfit@gmail.com" className="break-all group-hover:text-blue-400 transition-colors">cplayfit@gmail.com</a>
                   </li>
                   <li className="flex items-center gap-2 text-xs sm:text-sm text-gray-300 group">
                     <Phone className="w-4 h-4 flex-shrink-0 group-hover:text-green-400 transition-colors" />
-                    <span className="group-hover:text-green-400 transition-colors">+1 (234) 567-890</span>
+                    <a href="tel:+918910484299" className="group-hover:text-green-400 transition-colors">+91 8910484299</a>
                   </li>
                 </ul>
                 
                 {/* CTA Button */}
                 <div className="mt-6">
-                  <Link href="#trial" className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-sm font-semibold rounded-full transition-all hover:scale-105 shadow-lg">
-                    <Sparkles className="w-4 h-4" />
-                    Start Free Trial
+                  <Link href="#contact" className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-sm font-semibold rounded-full transition-all hover:scale-105 shadow-lg">
+                    <Mail className="w-4 h-4" />
+                    Contact Us
                   </Link>
                 </div>
               </div>
@@ -1374,5 +1373,6 @@ export default function Home() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

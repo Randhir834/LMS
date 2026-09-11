@@ -51,19 +51,10 @@ api.interceptors.response.use(
     // Handle 401 - Unauthorized (invalid/expired token)
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        // Clear all auth data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('sessionToken');
-        sessionStorage.removeItem('auth_session');
-        sessionStorage.removeItem('page_loaded');
-        sessionStorage.setItem('logout_initiated', 'true');
-        
-        // Dispatch logout event
-        window.dispatchEvent(new Event('auth:logout'));
-        
-        // Redirect to home page instead of login page with cache busting
-        window.location.href = `/?session_expired=${Date.now()}`;
+        window.location.href = '/login';
       }
     }
     

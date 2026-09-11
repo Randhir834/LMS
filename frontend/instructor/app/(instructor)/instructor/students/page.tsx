@@ -5,13 +5,11 @@ import { useRouter } from 'next/navigation';
 import { enrollmentService } from '@/services/enrollmentService';
 import { InstructorStudent } from '@/types';
 import { Users, Mail, Phone, BookOpen } from 'lucide-react';
-import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 
 export default function InstructorStudentsPage() {
   const router = useRouter();
   const [students, setStudents] = useState<InstructorStudent[]>([]);
   const [loading, setLoading] = useState(true);
-  const showLoading = useDelayedLoading(loading, 300);
 
   useEffect(() => {
     fetchStudents();
@@ -30,7 +28,7 @@ export default function InstructorStudentsPage() {
     }
   };
 
-  if (showLoading) {
+  if (loading) {
     return (
       <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto space-y-6">
         <div className="mb-8">

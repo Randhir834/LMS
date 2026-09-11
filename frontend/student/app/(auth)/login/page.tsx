@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/services/authService';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import StudentAuthSplitShell from '@/components/layouts/StudentAuthSplitShell';
 import { getUserFriendlyError, logTechnicalError } from '@/utils/errorHandler';
 
-export default function LoginPage() {
+function LoginForm() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -17,13 +17,26 @@ export default function LoginPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
 
   // Redirect if already authenticated
   useEffect(() => {
+    // Check if user just logged out - if so, redirect to homepage immediately
+    if (typeof window !== 'undefined') {
+      const logoutInitiated = sessionStorage.getItem('logout_initiated');
+      if (logoutInitiated === 'true') {
+        sessionStorage.removeItem('logout_initiated');
+        // Immediately redirect to homepage without showing login page
+        window.location.replace('/');
+        return;
+      }
+    }
+    
     // Clear logout flag if present
     sessionStorage.removeItem('logout_initiated');
     
-    // Clear any stale tokens on logout redirect from home page
+    // Clear any stale tokens on logout redirect
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('logout') || urlParams.has('session_expired')) {
@@ -76,8 +89,12 @@ export default function LoginPage() {
       
       login(data.user, data.token, data.sessionToken);
       
-      // Use replace to prevent back navigation to login page after successful login
-      router.replace('/student');
+      // Redirect to returnUrl if provided, otherwise go to student dashboard
+      if (returnUrl) {
+        router.replace(returnUrl);
+      } else {
+        router.replace('/student');
+      }
     } catch (err: unknown) {
       logTechnicalError('Student Login', err);
       const message = getUserFriendlyError(err);
@@ -189,7 +206,7 @@ export default function LoginPage() {
             </div>
 
             <div className="text-right">
-              <Link href="/forgot-password" className="text-xs xs:text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-700 hover:to-purple-700 transition-all active:scale-95 inline-block">
+              <Link href="/forgot-password" className="text-xs xs:text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-700 hover:to-purple-700 transition-all active:scale-95">
                 Forgot Password?
               </Link>
             </div>
@@ -243,5 +260,17 @@ export default function LoginPage() {
         </div>
       </div>
     </StudentAuthSplitShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -77,12 +77,25 @@ export default function SecureViewer({
       setLoading(true);
       setError(null);
 
+      console.log('Fetching secure URL for material:', materialId);
+
       // Generate token
       const tokenResponse = await courseMaterialService.getViewingToken(materialId);
+      console.log('Token generated:', { expiresAt: tokenResponse.expiresAt });
       setTokenExpiry(new Date(tokenResponse.expiresAt));
 
       // Get secure URL
       const urlResponse = await courseMaterialService.getSecureUrl(tokenResponse.token);
+      console.log('Secure URL response:', { 
+        hasUrl: !!urlResponse.secureUrl, 
+        fileName: urlResponse.fileName,
+        mimeType: urlResponse.mimeType 
+      });
+      
+      if (!urlResponse.secureUrl) {
+        throw new Error('No secure URL returned from server');
+      }
+
       setSecureUrl(urlResponse.secureUrl);
 
       // Set up auto-refresh before token expires (refresh at 80% of token lifetime)
@@ -102,7 +115,15 @@ export default function SecureViewer({
 
     } catch (err: any) {
       console.error('Failed to fetch secure URL:', err);
-      setError(err.response?.data?.message || 'Failed to load material. Please try again.');
+      const errorMessage = err.response?.data?.message 
+        || err.message 
+        || 'Failed to load material. Please try again.';
+      console.error('Error details:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data
+      });
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -134,6 +155,8 @@ export default function SecureViewer({
     const isImage = mimeType.startsWith('image/');
     const isPdf = mimeType === 'application/pdf';
     const isVideo = mimeType.startsWith('video/');
+    const isDoc = mimeType.includes('word') || mimeType.includes('document');
+    const isPpt = mimeType.includes('powerpoint') || mimeType.includes('presentation');
 
     if (isImage) {
       return (
@@ -206,6 +229,40 @@ export default function SecureViewer({
               userSelect: 'none',
               WebkitUserSelect: 'none'
             }}
+            onContextMenu={(e) => e.preventDefault()}
+          />
+        </div>
+      );
+    }
+
+    // For DOC/DOCX/PPT/PPTX - Use Google Docs Viewer (no download/print buttons)
+    if (isDoc || isPpt) {
+      const encodedUrl = encodeURIComponent(secureUrl);
+      
+      // Google Docs Viewer - Most secure option, no download/print by default
+      const viewerUrl = `https://docs.google.com/gview?url=${encodedUrl}&embedded=true`;
+      
+      return (
+        <div className="relative w-full h-full">
+          {/* Invisible overlay to prevent interactions with iframe controls */}
+          <div 
+            className="absolute inset-0 z-10 pointer-events-none"
+            style={{ 
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              WebkitTouchCallout: 'none'
+            }}
+          />
+          
+          <iframe
+            src={viewerUrl}
+            className="w-full h-full border-0"
+            style={{ 
+              userSelect: 'none',
+              pointerEvents: 'auto'
+            }}
+            title={materialTitle}
+            sandbox="allow-same-origin allow-scripts"
             onContextMenu={(e) => e.preventDefault()}
           />
         </div>
@@ -290,12 +347,23 @@ export default function SecureViewer({
           <div className="absolute inset-0 flex items-center justify-center bg-[#1E293B]">
             <div className="text-center max-w-md px-4">
               <AlertCircle className="size-12 text-[#EF4444] mx-auto mb-3" />
-              <p className="text-white font-medium mb-2">Failed to Load Material</p>
-              <p className="text-[#94A3B8] text-sm mb-4">{error}</p>
-              <Button onClick={handleRefresh} className="flex items-center gap-2 mx-auto">
-                <RefreshCw className="size-4" />
-                Try Again
-              </Button>
+              <p className="text-white font-medium mb-2">Failed to Load Document</p>
+              <p className="text-[#94A3B8] text-sm mb-4">Failed to load material. Please try again.</p>
+              <p className="text-[#64748B] text-xs mb-4 font-mono bg-[#0F172A] p-3 rounded border border-[#334155] max-h-32 overflow-auto text-left">
+                {error}
+              </p>
+              <div className="flex flex-col gap-2">
+                <Button onClick={handleRefresh} className="flex items-center gap-2 mx-auto">
+                  <RefreshCw className="size-4" />
+                  Try Again
+                </Button>
+                <button 
+                  onClick={handleClose}
+                  className="text-sm text-[#94A3B8] hover:text-white transition-colors"
+                >
+                  Please close this tab and try again from the course page.
+                </button>
+              </div>
             </div>
           </div>
         )}
