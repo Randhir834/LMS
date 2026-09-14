@@ -24,14 +24,14 @@ function SecureViewerContent() {
   // Annotation states
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [annotationEnabled, setAnnotationEnabled] = useState(false); // Default: OFF
+  const [annotationEnabled, setAnnotationEnabled] = useState(false);
   const [annotationMode, setAnnotationMode] = useState<'draw' | 'erase' | null>(null);
-  const [penColor, setPenColor] = useState('#FF0000'); // Red default
+  const [penColor, setPenColor] = useState('#FF0000');
   const [penSize, setPenSize] = useState(3);
   const [annotations, setAnnotations] = useState<ImageData[]>([]);
   const [currentAnnotationIndex, setCurrentAnnotationIndex] = useState(-1);
 
-  // Comprehensive protection against copying, printing, and downloading
+  // Comprehensive protection
   useEffect(() => {
     const preventDefaults = (e: Event) => {
       e.preventDefault();
@@ -40,49 +40,43 @@ function SecureViewerContent() {
 
     const preventCopy = (e: ClipboardEvent) => {
       e.preventDefault();
-      console.warn('Copy attempt blocked');
+      alert('Copying is not allowed for this material.');
     };
 
     const preventKeyboard = (e: KeyboardEvent) => {
-      // Prevent Ctrl+C, Cmd+C, Ctrl+S, Cmd+S, Ctrl+P, Cmd+P, Print Screen
       if (
         (e.ctrlKey || e.metaKey) && 
         (e.key === 'c' || e.key === 's' || e.key === 'p' || e.key === 'a')
       ) {
         e.preventDefault();
-        console.warn('Keyboard shortcut blocked:', e.key);
+        if (e.key === 'p') alert('Printing is not allowed for this material.');
       }
       
-      // Block PrintScreen
       if (e.key === 'PrintScreen') {
         e.preventDefault();
+        alert('Screenshots are not allowed for this material.');
         if (materialId) {
           courseMaterialService.reportScreenshotAttempt(parseInt(materialId));
         }
-        console.warn('Screenshot attempt blocked');
       }
 
-      // Block F12 (DevTools)
-      if (e.key === 'F12') {
+      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
         e.preventDefault();
-        console.warn('DevTools access blocked');
+        alert('Developer tools are disabled for security.');
       }
     };
 
     const preventPrint = () => {
-      console.warn('Print attempt blocked');
+      alert('Printing is not allowed for this material.');
       return false;
     };
 
-    // Add event listeners
     document.addEventListener('contextmenu', preventDefaults);
     document.addEventListener('copy', preventCopy);
     document.addEventListener('cut', preventCopy);
     document.addEventListener('keydown', preventKeyboard);
     document.addEventListener('dragstart', preventDefaults);
     document.addEventListener('selectstart', preventDefaults);
-    
-    // Block print
     window.onbeforeprint = preventPrint;
 
     return () => {
@@ -96,7 +90,7 @@ function SecureViewerContent() {
     };
   }, [materialId]);
 
-  // Fetch secure URL and token
+  // Fetch secure URL
   const fetchSecureUrl = useCallback(async () => {
     if (!materialId) {
       setError('Material ID is required');
@@ -108,28 +102,10 @@ function SecureViewerContent() {
       setLoading(true);
       setError(null);
 
-      console.log('[SecureViewer] Fetching token for material:', materialId);
-
-      // Generate token
       const tokenResponse = await courseMaterialService.getViewingToken(parseInt(materialId));
-      console.log('[SecureViewer] Token received, expires at:', tokenResponse.expiresAt);
-
-      // Get secure URL
       const urlResponse = await courseMaterialService.getSecureUrl(tokenResponse.token);
-      console.log('[SecureViewer] Secure URL received:', {
-        urlLength: urlResponse.secureUrl?.length,
-        urlPrefix: urlResponse.secureUrl?.substring(0, 50) + '...',
-        fileName: urlResponse.fileName,
-        mimeType: urlResponse.mimeType
-      });
-
-      if (!urlResponse.secureUrl) {
-        throw new Error('Server returned empty URL');
-      }
-
       setSecureUrl(urlResponse.secureUrl);
 
-      // Set up auto-refresh before token expires (refresh at 80% of token lifetime)
       const expiryTime = new Date(tokenResponse.expiresAt).getTime();
       const currentTime = Date.now();
       const tokenLifetime = expiryTime - currentTime;
@@ -140,24 +116,12 @@ function SecureViewerContent() {
       }
 
       refreshTimerRef.current = setTimeout(() => {
-        console.log('[SecureViewer] Auto-refreshing token...');
         fetchSecureUrl();
       }, refreshTime);
 
     } catch (err: any) {
-      console.error('[SecureViewer] Error fetching secure URL:', err);
-      console.error('[SecureViewer] Error details:', {
-        message: err.message,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data
-      });
-      
-      const errorMessage = err.response?.data?.message 
-        || err.message 
-        || 'Failed to load material. Please try again.';
-      
-      setError(`Error: ${errorMessage}`);
+      console.error('Failed to fetch secure URL:', err);
+      setError(err.response?.data?.message || 'Failed to load material.');
     } finally {
       setLoading(false);
     }
@@ -165,7 +129,6 @@ function SecureViewerContent() {
 
   useEffect(() => {
     fetchSecureUrl();
-
     return () => {
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current);
@@ -173,33 +136,22 @@ function SecureViewerContent() {
     };
   }, [fetchSecureUrl]);
 
-  const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 10, 200));
-  };
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 10, 200));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 10, 50));
 
-  const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 10, 50));
-  };
-
-  // Toggle annotation mode
   const toggleAnnotation = () => {
     const newState = !annotationEnabled;
     setAnnotationEnabled(newState);
-    
-    // When enabling, auto-select draw tool
     if (newState) {
       setAnnotationMode('draw');
     } else {
-      // When disabling, clear mode
       setAnnotationMode(null);
     }
   };
 
-  // Annotation functions
   const saveAnnotationState = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
@@ -235,7 +187,6 @@ function SecureViewerContent() {
   const clearAnnotations = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
@@ -245,7 +196,7 @@ function SecureViewerContent() {
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!annotationEnabled || !annotationMode) return; // Check if annotation is enabled
+    if (!annotationEnabled || !annotationMode) return;
     
     setIsDrawing(true);
     const canvas = canvasRef.current;
@@ -263,7 +214,7 @@ function SecureViewerContent() {
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !annotationEnabled || !annotationMode) return; // Check if annotation is enabled
+    if (!isDrawing || !annotationEnabled || !annotationMode) return;
     
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -294,7 +245,7 @@ function SecureViewerContent() {
     }
   };
 
-  // Initialize canvas size
+  // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -303,7 +254,6 @@ function SecureViewerContent() {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
       
-      // Restore last annotation if exists
       if (currentAnnotationIndex >= 0 && annotations[currentAnnotationIndex]) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
@@ -314,78 +264,23 @@ function SecureViewerContent() {
     
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-    
     return () => window.removeEventListener('resize', resizeCanvas);
   }, [annotations, currentAnnotationIndex]);
 
   const renderContent = () => {
     if (!secureUrl) return null;
 
-    const isDoc = ['doc', 'docx', 'document'].some(type => 
-      fileType?.includes(type) || mimeType?.includes('word') || mimeType?.includes('document')
-    );
-    const isPpt = ['ppt', 'pptx', 'presentation'].some(type => 
-      fileType?.includes(type) || mimeType?.includes('powerpoint') || mimeType?.includes('presentation')
-    );
-    const isPdf = fileType?.includes('pdf') || mimeType?.includes('pdf');
+    const isPdf = mimeType?.includes('pdf');
+    const isDoc = mimeType?.includes('word') || mimeType?.includes('document');
+    const isPpt = mimeType?.includes('powerpoint') || mimeType?.includes('presentation');
 
-    // For PDF files - Use PDF.js viewer or direct iframe
-    if (isPdf) {
-      return (
-        <div className="relative w-full h-full overflow-auto">
-          <iframe
-            ref={iframeRef}
-            src={`${secureUrl}#toolbar=0&navpanes=0&scrollbar=1`}
-            className="w-full h-full border-0 absolute inset-0"
-            style={{ 
-              transform: `scale(${zoom / 100})`,
-              transformOrigin: 'top left',
-              width: `${10000 / zoom}%`,
-              height: `${10000 / zoom}%`,
-              userSelect: 'none',
-              pointerEvents: annotationEnabled && annotationMode ? 'none' : 'auto'
-            }}
-            title={materialTitle || 'PDF Document'}
-            onContextMenu={(e) => e.preventDefault()}
-          />
-          
-          {/* Annotation canvas overlay */}
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
-            style={{
-              cursor: annotationEnabled && annotationMode === 'draw' ? 'crosshair' 
-                    : annotationEnabled && annotationMode === 'erase' ? 'pointer' 
-                    : 'default',
-              pointerEvents: annotationEnabled && annotationMode ? 'auto' : 'none',
-              touchAction: 'none'
-            }}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-          />
-        </div>
-      );
-    }
-
-    // For DOC/DOCX/PPT/PPTX - Use Microsoft Office Online Viewer
-    if (isDoc || isPpt) {
-      // Use proxy endpoint that serves the file directly through our backend
-      // This allows Office Viewer to access private files
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-      const proxyUrl = `${backendUrl}/api/materials/proxy/${secureUrl.split('/').pop()}`; // Extract token from secure URL
-      
-      // Use the Supabase signed URL directly or proxy URL
-      const viewerFileUrl = secureUrl; // Use signed URL directly first
-      const encodedUrl = encodeURIComponent(viewerFileUrl);
-      
-      // Office Online Viewer
-      const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
+    // For PDF/DOC/PPT - Use Google Docs Viewer
+    if (isPdf || isDoc || isPpt) {
+      const encodedUrl = encodeURIComponent(secureUrl);
+      const viewerUrl = `https://docs.google.com/gview?url=${encodedUrl}&embedded=true`;
       
       return (
         <div className="relative w-full h-full overflow-auto">
-          {/* Document iframe */}
           <iframe
             ref={iframeRef}
             src={viewerUrl}
@@ -399,17 +294,10 @@ function SecureViewerContent() {
               pointerEvents: annotationEnabled && annotationMode ? 'none' : 'auto'
             }}
             title={materialTitle || 'Document'}
+            sandbox="allow-same-origin allow-scripts"
             onContextMenu={(e) => e.preventDefault()}
-            onLoad={() => {
-              console.log('[SecureViewer] Office viewer iframe loaded');
-            }}
-            onError={(e) => {
-              console.error('[SecureViewer] Office viewer failed to load', e);
-              setError('Failed to load document. The file may not be publicly accessible or the viewer service is unavailable. Please try refreshing or contact support.');
-            }}
           />
           
-          {/* Annotation canvas overlay */}
           <canvas
             ref={canvasRef}
             className="absolute inset-0 w-full h-full"
@@ -429,14 +317,12 @@ function SecureViewerContent() {
       );
     }
 
-    // Fallback
     return (
       <div className="relative w-full h-full flex items-center justify-center bg-gray-900">
         <div className="text-center text-white p-8">
           <AlertCircle className="w-16 h-16 mx-auto mb-4 text-yellow-500" />
           <h3 className="text-xl font-semibold mb-2">Preview Not Available</h3>
           <p className="text-gray-400">This file type cannot be previewed securely.</p>
-          <p className="text-gray-500 text-sm mt-2">Supported formats: PDF, DOC, DOCX, PPT, PPTX</p>
         </div>
       </div>
     );
@@ -471,7 +357,7 @@ function SecureViewerContent() {
         </div>
         
         <div className="flex items-center gap-3 ml-4">
-          {/* Enable Annotation Toggle Button */}
+          {/* Annotation Toggle */}
           <button
             onClick={toggleAnnotation}
             className={`px-4 py-2 rounded-lg font-medium transition-all ${
@@ -484,12 +370,11 @@ function SecureViewerContent() {
             {annotationEnabled ? '✏️ Annotation ON' : '✏️ Enable Annotation'}
           </button>
           
-          {/* Annotation Tools - Only visible when annotation is enabled */}
+          {/* Annotation Tools */}
           {annotationEnabled && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700">
-              {/* Draw tool */}
               <button
-                onClick={() => setAnnotationMode(annotationMode === 'draw' ? 'draw' : 'draw')}
+                onClick={() => setAnnotationMode('draw')}
                 className={`p-1.5 rounded transition-colors ${
                   annotationMode === 'draw' 
                     ? 'bg-blue-600 text-white' 
@@ -500,9 +385,8 @@ function SecureViewerContent() {
                 <Pen className="w-4 h-4" />
               </button>
               
-              {/* Eraser tool */}
               <button
-                onClick={() => setAnnotationMode(annotationMode === 'erase' ? 'draw' : 'erase')}
+                onClick={() => setAnnotationMode('erase')}
                 className={`p-1.5 rounded transition-colors ${
                   annotationMode === 'erase' 
                     ? 'bg-blue-600 text-white' 
@@ -515,7 +399,6 @@ function SecureViewerContent() {
               
               <div className="w-px h-5 bg-gray-700" />
               
-              {/* Color picker */}
               <input
                 type="color"
                 value={penColor}
@@ -524,7 +407,6 @@ function SecureViewerContent() {
                 title="Pen Color"
               />
               
-              {/* Pen size slider */}
               <input
                 type="range"
                 min="1"
@@ -537,7 +419,6 @@ function SecureViewerContent() {
               
               <div className="w-px h-5 bg-gray-700" />
               
-              {/* Undo */}
               <button
                 onClick={undo}
                 disabled={currentAnnotationIndex <= 0}
@@ -547,7 +428,6 @@ function SecureViewerContent() {
                 <Undo className="w-4 h-4" />
               </button>
               
-              {/* Redo */}
               <button
                 onClick={redo}
                 disabled={currentAnnotationIndex >= annotations.length - 1}
@@ -557,11 +437,10 @@ function SecureViewerContent() {
                 <Redo className="w-4 h-4" />
               </button>
               
-              {/* Clear all */}
               <button
                 onClick={clearAnnotations}
                 className="p-1.5 rounded text-red-400 hover:text-red-300 hover:bg-gray-700 transition-colors"
-                title="Clear All Annotations"
+                title="Clear All"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -593,14 +472,13 @@ function SecureViewerContent() {
         </div>
       </div>
 
-      {/* Content Area */}
+      {/* Content */}
       <div className="flex-1 relative overflow-hidden min-h-0">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
             <div className="text-center">
               <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-3" />
               <p className="text-white text-sm">Loading document...</p>
-              <p className="text-gray-400 text-xs mt-2">Please wait while we prepare your secure view</p>
             </div>
           </div>
         )}
@@ -609,9 +487,8 @@ function SecureViewerContent() {
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
             <div className="text-center max-w-md px-4">
               <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <p className="text-white font-semibold text-lg mb-2">Failed to Load Document</p>
-              <p className="text-gray-400 text-sm mb-6">{error}</p>
-              <p className="text-gray-500 text-sm">Please close this tab and try again from the course page.</p>
+              <p className="text-white font-semibold text-lg mb-2">Failed to Load</p>
+              <p className="text-gray-400 text-sm">{error}</p>
             </div>
           </div>
         )}
@@ -619,7 +496,21 @@ function SecureViewerContent() {
         {!loading && !error && renderContent()}
       </div>
 
-      {/* Additional CSS protection */}
+      {/* Footer */}
+      <div className="bg-gray-900 px-4 py-2 border-t border-gray-700">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-400">
+            🔒 This material is protected. Download, copy, and sharing are disabled.
+          </p>
+          {annotationEnabled && (
+            <p className="text-xs text-blue-400 font-medium">
+              Draw or erase on the document
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* CSS Protection */}
       <style jsx global>{`
         @media print {
           body, body * {
@@ -627,14 +518,9 @@ function SecureViewerContent() {
           }
         }
         
-        iframe {
-          pointer-events: auto !important;
-        }
-        
         * {
           -webkit-user-select: none !important;
           -moz-user-select: none !important;
-          -ms-user-select: none !important;
           user-select: none !important;
           -webkit-touch-callout: none !important;
         }
