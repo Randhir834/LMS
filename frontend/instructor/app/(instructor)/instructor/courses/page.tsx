@@ -8,6 +8,7 @@ import CourseCard from '@/components/ui/CourseCard';
 import { courseService } from '@/services/courseService';
 import { categoryService } from '@/services/categoryService';
 import type { Course, Category } from '@/types';
+import { PageLoading, InlineLoading } from '@/components/ui/LoadingSpinner';
 
 function InstructorCoursesContent() {
   const searchParams = useSearchParams();
@@ -87,9 +88,9 @@ function InstructorCoursesContent() {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto space-y-6">
-      {/* Header with Gradient */}
-      <div className="mb-8">
+    <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto">
+      {/* Header with proper z-index */}
+      <div className="mb-8 relative z-10">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl shadow-lg">
             <BookOpen className="w-6 h-6 text-white" />
@@ -105,16 +106,11 @@ function InstructorCoursesContent() {
         </p>
       </div>
 
-      {/* Course Grid */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-16">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"></div>
-            <Loader2 className="absolute inset-0 m-auto size-8 animate-spin text-white" />
-          </div>
-          <p className="mt-4 text-gray-600 font-medium">Loading your courses...</p>
-        </div>
-      ) : courses.length === 0 ? (
+      {/* Course Grid with proper z-index */}
+      <div className="relative z-0">
+        {loading ? (
+          <InlineLoading text="Loading your courses..." className="py-16" />
+        ) : courses.length === 0 ? (
         <Card className="border-2 border-dashed border-gray-300">
           <CardContent className="p-8 sm:p-12">
             <div className="text-center">
@@ -144,13 +140,14 @@ function InstructorCoursesContent() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }
 
 export default function InstructorCoursesPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PageLoading message="Loading courses..." />}>
       <InstructorCoursesContent />
     </Suspense>
   );

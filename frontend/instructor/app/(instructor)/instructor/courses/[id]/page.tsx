@@ -12,6 +12,7 @@ import { useSocket } from '@/hooks/useSocket';
 import { socketService } from '@/services/socketService';
 import { getAvatarUrl } from '@/utils/avatarUtils';
 import type { Course } from '@/types';
+import { PageLoading } from '@/components/ui/LoadingSpinner';
 
 export default function InstructorCourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -132,16 +133,7 @@ export default function InstructorCourseDetailPage({ params }: { params: Promise
   }, [courseId, onCourseMaterialUploaded, offCourseMaterialUploaded]);
 
   if (loading) {
-    return (
-      <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <Loader2 className="size-12 animate-spin text-blue-500 mx-auto mb-4" />
-            <p className="text-sm text-gray-500">Loading course details...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <PageLoading text="Loading course details..." />;
   }
 
   if (!course) {

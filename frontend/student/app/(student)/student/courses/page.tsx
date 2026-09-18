@@ -7,6 +7,7 @@ import { courseService } from '@/services/courseService';
 import { enrollmentService } from '@/services/enrollmentService';
 import { useAuth } from '@/hooks/useAuth';
 import type { Course } from '@/types';
+import { PageLoading } from '@/components/ui/LoadingSpinner';
 
 function StudentCoursesContent() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -53,12 +54,8 @@ function StudentCoursesContent() {
   }, [isAuthenticated, authLoading]);
 
   // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-      </div>
-    );
+  if (authLoading || loading) {
+    return <PageLoading text="Loading courses..." />;
   }
 
   const enrolledCourses = courses.filter(c => c.is_enrolled);
@@ -72,8 +69,8 @@ function StudentCoursesContent() {
 
   return (
     <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
-        {/* Header with Gradient Blur Background */}
-        <div className="relative">
+        {/* Header with proper z-index */}
+        <div className="relative z-10">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-100 via-pink-100 to-purple-100 rounded-2xl blur-3xl opacity-30 -z-10"></div>
           <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 md:p-6 lg:p-7 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center gap-3 mb-2">

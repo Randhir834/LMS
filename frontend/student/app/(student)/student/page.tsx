@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
-  BookOpen, Video,
-  ChevronRight, Trophy, TrendingUp, Zap, Target
+  BookOpen, Video, 
+  Zap, Target
 } from 'lucide-react';
 import { dashboardService, DashboardData } from '@/services/dashboardService';
 import { userService, UserProfile } from '@/services/userService';
 import UpcomingLiveClasses from '@/components/UpcomingLiveClasses';
+import { PageLoading } from '@/components/ui/LoadingSpinner';
 
 export default function StudentHomePage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -43,6 +45,10 @@ export default function StudentHomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  if (loading) {
+    return <PageLoading message="Loading your dashboard..." />;
+  }
+
   if (error) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[60vh] sm:min-h-[70vh] p-4">
@@ -63,63 +69,63 @@ export default function StudentHomePage() {
   }
 
   const stats = dashboardData?.stats || { enrolledCourses: 0, liveClasses: 0, achievements: 0 };
-  const courses = dashboardData?.courses || [];
-
   const displayName = user?.name || 'Student';
 
   return (
     <div className="flex flex-col xl:flex-row">
       {/* Center Content */}
       <main className="flex-1 p-4 sm:p-5 md:p-6 lg:p-8 min-w-0 max-w-[1600px] mx-auto w-full">
-          {/* Welcome Message - Enhanced */}
-          <div className="mb-6 sm:mb-8 md:mb-10 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 rounded-3xl blur-3xl opacity-30 -z-10"></div>
-            <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 sm:p-7 md:p-8 border border-gray-200 shadow-lg">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                    <span className="text-sm font-medium text-gray-600">Welcome back,</span>
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent break-words mb-3">
-                    {displayName}!
-                  </h1>
-                  <p className="text-sm sm:text-base text-gray-600 max-w-2xl">
-                    Keep going! Your next milestone is closer than you think. 🚀
-                  </p>
+        {/* Welcome Message - Enhanced */}
+        <div className="mb-6 sm:mb-8 md:mb-10 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 rounded-3xl blur-3xl opacity-30 -z-10"></div>
+          <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 sm:p-7 md:p-8 border border-gray-200 shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                  <span className="text-sm font-medium text-gray-600">Welcome back,</span>
                 </div>
-                <div className="hidden sm:block">
-                  <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-xl transform rotate-6 hover:rotate-12 transition-transform">
-                    <Target className="w-10 h-10 md:w-12 md:h-12 text-white" />
-                  </div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent break-words mb-3">
+                  {displayName}!
+                </h1>
+                <p className="text-sm sm:text-base text-gray-600 max-w-2xl">
+                  Keep going! Your next milestone is closer than you think. 🚀
+                </p>
+              </div>
+              <div className="hidden sm:block">
+                <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-xl transform rotate-6 hover:rotate-12 transition-transform">
+                  <Target className="w-10 h-10 md:w-12 md:h-12 text-white" />
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Summary Cards - Fully Responsive Grid with Gradients */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-5 mb-6 sm:mb-8 md:mb-10">
-            {[
-              { 
-                label: 'Enrolled Courses', 
-                value: String(stats.enrolledCourses), 
-                icon: BookOpen, 
-                gradient: 'from-blue-500 to-cyan-500',
-                bgGradient: 'from-blue-50 to-cyan-50',
-                shadowColor: 'shadow-blue-500/20'
-              },
-              { 
-                label: 'Live Classes', 
-                value: String(stats.liveClasses), 
-                icon: Video, 
-                gradient: 'from-purple-500 to-pink-500',
-                bgGradient: 'from-purple-50 to-pink-50',
-                shadowColor: 'shadow-purple-500/20'
-              },
-            ].map((card, index) => (
+        {/* Summary Cards - Fully Responsive Grid with Gradients */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-5 mb-8 sm:mb-10 md:mb-12">
+          {[
+            { 
+              label: 'Enrolled Courses', 
+              value: String(stats.enrolledCourses), 
+              icon: BookOpen, 
+              gradient: 'from-blue-500 to-cyan-500',
+              bgGradient: 'from-blue-50 to-cyan-50',
+              shadowColor: 'shadow-blue-500/20',
+              href: '/student/my-courses'
+            },
+            { 
+              label: 'Live Classes', 
+              value: String(stats.liveClasses), 
+              icon: Video, 
+              gradient: 'from-purple-500 to-pink-500',
+              bgGradient: 'from-purple-50 to-pink-50',
+              shadowColor: 'shadow-purple-500/20',
+              href: '/student/live-classes'
+            },
+          ].map((card, index) => (
+            <Link key={index} href={card.href}>
               <div 
-                key={index} 
-                className={`group relative bg-gradient-to-br ${card.bgGradient} rounded-2xl border border-white shadow-lg hover:shadow-2xl ${card.shadowColor} transition-all duration-300 hover:-translate-y-2 overflow-hidden`}
+                className={`group relative bg-gradient-to-br ${card.bgGradient} rounded-2xl border border-white shadow-lg hover:shadow-2xl ${card.shadowColor} transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer`}
               >
                 {/* Gradient Overlay on Hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
@@ -144,16 +150,15 @@ export default function StudentHomePage() {
                   <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${card.gradient} opacity-5 rounded-bl-full`}></div>
                 </div>
               </div>
-            ))}
-          </div>
+            </Link>
+          ))}
+        </div>
 
-          {/* Upcoming Live Classes */}
-          {courses.length > 0 && (
-            <div className="mt-6 sm:mt-8">
-              <UpcomingLiveClasses />
-            </div>
-          )}
-        </main>
-      </div>
+        {/* Upcoming Live Classes */}
+        <div className="mt-8 sm:mt-10">
+          <UpcomingLiveClasses />
+        </div>
+      </main>
+    </div>
   );
 }

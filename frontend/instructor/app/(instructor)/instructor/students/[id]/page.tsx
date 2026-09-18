@@ -4,7 +4,9 @@ import { useEffect, useState, use } from 'react';
 import { Calendar, BookOpen, User, Mail, Phone, GraduationCap, Video, Loader2, Clock, Plus, X, Minus, CheckCircle } from 'lucide-react';
 import { enrollmentService } from '@/services/enrollmentService';
 import { liveClassService } from '@/services/liveClassService';
+import { lessonCompletionService } from '@/services/lessonCompletionService';
 import type { StudentEnrolledCourse } from '@/types';
+import { PageLoading } from '@/components/ui/LoadingSpinner';
 
 interface StudentInfo {
   student_id: number;
@@ -63,26 +65,46 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const handleUpdateProgress = async (enrollmentId: number, currentCompleted: number, increment: boolean, totalLessons: number) => {
-    const newCompleted = increment ? currentCompleted + 1 : currentCompleted - 1;
-    
-    // Validate bounds
-    if (newCompleted < 0 || newCompleted > totalLessons) {
-      return;
-    }
-
     try {
       setUpdatingProgress(enrollmentId);
       
-      await enrollmentService.updateCompletedLessons(enrollmentId, newCompleted);
-      
-      // Update local state
-      setCourses(prevCourses => 
-        prevCourses.map(course => 
-          course.enrollment_id === enrollmentId 
-            ? { ...course, completed_lessons: newCompleted }
-            : course
-        )
-      );
+      if (increment) {
+        // Mark the next uncompleted lesson as complete
+        const nextLessonNumber = currentCompleted + 1;
+        if (nextLessonNumber > totalLessons) {
+          alert('All lessons are already completed!');
+          return;
+        }
+        
+        await lessonCompletionService.markComplete(enrollmentId, nextLessonNumber);
+        
+        // Update local state
+        setCourses(prevCourses => 
+          prevCourses.map(course => 
+            course.enrollment_id === enrollmentId 
+              ? { ...course, completed_lessons: currentCompleted + 1 }
+              : course
+          )
+        );
+      } else {
+        // Unmark the last completed lesson
+        if (currentCompleted === 0) {
+          alert('No lessons to unmark!');
+          return;
+        }
+        
+        const lastLessonNumber = currentCompleted;
+        await lessonCompletionService.unmarkComplete(enrollmentId, lastLessonNumber);
+        
+        // Update local state
+        setCourses(prevCourses => 
+          prevCourses.map(course => 
+            course.enrollment_id === enrollmentId 
+              ? { ...course, completed_lessons: currentCompleted - 1 }
+              : course
+          )
+        );
+      }
     } catch (error: any) {
       console.error('Error updating progress:', error);
       alert(error.response?.data?.error || 'Failed to update lesson progress');
@@ -135,16 +157,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   };
 
   if (loading) {
-    return (
-      <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto">
-        <div className="flex items-center justify-center py-16">
-          <div className="text-center">
-            <Loader2 className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E88E5] mx-auto mb-4" />
-            <p className="text-[#78909C]">Loading student details...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <PageLoading message="Loading student details..." />;
   }
 
   if (!student) {
@@ -232,7 +245,15 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
                   <div className="bg-gradient-to-r from-[#FAFAFA] to-[#F5F5F5] px-6 py-4 border-b border-[#E0E0E0]">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-[#1E3A5F] mb-1">{course.course_title}</h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-xl font-bold text-[#1E3A5F]">{course.course_title}</h3>
+                          {course.is_directly_assigned && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                              <User className="w-3 h-3" />
+                              Assigned
+                            </span>
+                          )}
+                        </div>
                         {course.course_description && (
                           <p className="text-sm text-[#78909C] line-clamp-2">{course.course_description}</p>
                         )}

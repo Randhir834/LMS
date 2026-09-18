@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import NavigationLoaderProvider from "@/providers/NavigationLoaderProvider";
 import { Toaster } from "react-hot-toast";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import TopLoadingBar from "@/components/TopLoadingBar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,9 +22,9 @@ export const metadata: Metadata = {
   title: "PlayFit Admin",
   description: "PlayFit Admin - Interactive Learning Platform Administration Portal",
   icons: {
-    icon: "/images/navbarlogo.png",
-    shortcut: "/images/navbarlogo.png",
-    apple: "/images/navbarlogo.png",
+    icon: "/logo.jpg",
+    shortcut: "/logo.jpg",
+    apple: "/logo.jpg",
   },
 };
 
@@ -40,6 +41,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[#F7FAFC]">
         <GoogleAnalytics />
+        <TopLoadingBar />
         <NavigationLoaderProvider />
         <Toaster 
           position="top-right"
